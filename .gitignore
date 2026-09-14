@@ -1,0 +1,8 @@
+node_modules
+dist
+scripts/data
+*.local
+.DS_Store
+
+# 本地开发文档（不随项目发布）
+docs/PLAN.md

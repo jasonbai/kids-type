@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#3b82f6"/>
+  <rect x="96" y="150" width="320" height="212" rx="36" fill="#fff"/>
+  <text x="256" y="292" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="150" font-weight="bold" fill="#3b82f6" text-anchor="middle">ab</text>
+  <circle cx="176" cy="400" r="14" fill="#93c5fd"/>
+  <circle cx="256" cy="400" r="14" fill="#93c5fd"/>
+  <circle cx="336" cy="400" r="14" fill="#93c5fd"/>
+</svg>
