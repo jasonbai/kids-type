@@ -6,3 +6,6 @@ scripts/data
 
 # 本地开发文档（不随项目发布）
 docs/PLAN.md
+
+# ZCode CLI 本地会话目录
+.zcode/
