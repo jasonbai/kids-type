@@ -112,7 +112,6 @@ export default function TopNav() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="查看源码（GitHub）"
-              title="开源代码：欢迎 Star / Fork 二次开发"
               className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-accent-foreground"
             >
               <GithubIcon className="size-[1.15rem]" />

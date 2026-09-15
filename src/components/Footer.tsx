@@ -17,8 +17,6 @@ export default function Footer() {
           开源项目（MIT License）
         </a>
         <span>·</span>
-        <span>欢迎 Star / Fork 二次开发</span>
-        <span>·</span>
         <a
           href="https://www.jasonbai.com"
           target="_blank"

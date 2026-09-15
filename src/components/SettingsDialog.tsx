@@ -415,8 +415,7 @@ export default function SettingsDialog({ open, onClose }: Props) {
             </h3>
             <p className="text-xs leading-relaxed text-muted-foreground">
               单词打字 v{APP_VERSION}
-              是一款开源的英语单词打字练习应用，基于 MIT 协议发布。欢迎访问源码仓库
-              Star / Fork，进行二次开发。
+              是一款开源的英语单词打字练习应用，基于 MIT 协议发布。
             </p>
             <a
               href={REPO_URL}
