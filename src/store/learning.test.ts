@@ -36,6 +36,28 @@ describe('reducer · RESULT', () => {
     expect(s.logs[0].wordsTyped).toBe(2); // 日志仍累计
   });
 
+  it('新词计数：当日首学 +1，同日重复不重复计', () => {
+    let s = reducer(freshState(), { type: 'RESULT', result: result('the', true) });
+    expect(s.logs[0].newWordsLearned).toBe(1);
+    s = reducer(s, { type: 'RESULT', result: result('the', false, ['x']) });
+    expect(s.logs[0].newWordsLearned).toBe(1);
+    s = reducer(s, { type: 'RESULT', result: result('of', true) });
+    expect(s.logs[0].newWordsLearned).toBe(2);
+  });
+
+  it('旧词复习不增加新词计数', () => {
+    const base = freshState();
+    const withRecord: LearningState = {
+      ...base,
+      records: {
+        of: { wordId: 'of', ease: 2.5, interval: 3, reps: 1, lapses: 0, dueDate: todayKey(), lastReviewAt: new Date().toISOString() },
+      },
+    };
+    const s = reducer(withRecord, { type: 'RESULT', result: result('of', true) });
+    expect(s.logs[0].wordsTyped).toBe(1);
+    expect(s.logs[0].newWordsLearned).toBe(0);
+  });
+
   it('打错：入错题本（错次/常错字母）', () => {
     const s = reducer(freshState(), { type: 'RESULT', result: result('of', false, ['q', 'q']) });
     expect(s.records.of.lapses).toBe(1);

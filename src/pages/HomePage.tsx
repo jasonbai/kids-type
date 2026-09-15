@@ -13,6 +13,11 @@ export default function HomePage() {
   const { state } = useLearning();
   const { records, meta, settings } = state;
 
+  const todayLog = state.logs.find((l) => l.date === todayKey());
+  /** 今日已完成的新词数（旧日志无此字段按 0） */
+  const learnedToday = todayLog?.newWordsLearned ?? 0;
+  const dailyNew = settings.dailyNewWords;
+
   const queue = useMemo(
     () =>
       buildDailyQueue({
@@ -26,7 +31,6 @@ export default function HomePage() {
   );
 
   const wrongCount = useMemo(() => activeWrongBook(state).length, [state]);
-  const todayLog = state.logs.find((l) => l.date === todayKey());
 
   return (
     <main className="mx-auto w-full max-w-4xl space-y-5 px-4 py-8">
@@ -90,11 +94,17 @@ export default function HomePage() {
               </Badge>
             </div>
             <div className="mt-1 text-sm text-muted-foreground">
-              今日 {queue.newWords.length} 个新词等你来
+              {queue.newWords.length === 0
+                ? '这个词库的新词已经全部学完啦'
+                : learnedToday === 0
+                  ? `今日 ${Math.min(dailyNew, queue.newWords.length)} 个新词等你来`
+                  : learnedToday < dailyNew
+                    ? `今日已学 ${learnedToday}/${dailyNew} 个，继续加油`
+                    : `今日已学 ${learnedToday} 个新词，可继续加练 ✨`}
             </div>
             <span className="mt-4 inline-flex">
-              <Button>
-                开始练习
+              <Button variant={queue.newWords.length === 0 ? 'secondary' : 'default'}>
+                {queue.newWords.length === 0 ? '去看看' : learnedToday >= dailyNew ? '继续加练' : '开始练习'}
                 <ArrowRight />
               </Button>
             </span>

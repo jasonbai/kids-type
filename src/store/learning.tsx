@@ -136,7 +136,7 @@ function applyResult(state: LearningState, result: WordResult): LearningState {
   const base: DailyLog =
     idx >= 0
       ? state.logs[idx]
-      : { date: today, wordsTyped: 0, correctCount: 0, wrongCount: 0, totalSeconds: 0, wpmBest: 0 };
+      : { date: today, wordsTyped: 0, correctCount: 0, wrongCount: 0, totalSeconds: 0, wpmBest: 0, newWordsLearned: 0 };
   const wordWpm = result.seconds > 0 ? Math.round(result.word.length / 5 / (result.seconds / 60)) : 0;
   const updated: DailyLog = {
     ...base,
@@ -145,6 +145,8 @@ function applyResult(state: LearningState, result: WordResult): LearningState {
     wrongCount: base.wrongCount + (result.correct ? 0 : 1),
     totalSeconds: base.totalSeconds + result.seconds,
     wpmBest: Math.max(base.wpmBest, wordWpm),
+    // 与游标推进同条件：仅当日首次完成的新词计数（同日重复/旧词复习不计）
+    newWordsLearned: (base.newWordsLearned ?? 0) + (isNewWord && result.level ? 1 : 0),
   };
   const logs = [...state.logs];
   if (idx >= 0) logs[idx] = updated;

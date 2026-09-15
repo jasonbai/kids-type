@@ -63,6 +63,8 @@ export interface DailyLog {
   wrongCount: number;
   totalSeconds: number;
   wpmBest: number;
+  /** 当日首次完成的新词数（旧数据无此字段，读取时按 0 兜底） */
+  newWordsLearned: number;
 }
 
 export interface Settings {
