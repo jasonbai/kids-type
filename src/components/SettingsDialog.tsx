@@ -10,6 +10,8 @@ import {
   Volume2,
   X,
 } from 'lucide-react';
+import GithubIcon from "./GithubIcon";
+import { APP_VERSION, REPO_URL } from '../lib/repo';
 import type { Settings } from '../types';
 import { listEnglishVoices, speak, unlockSpeech } from '../lib/speech';
 import { KEYS } from '../storage/keys';
@@ -323,6 +325,28 @@ export default function SettingsDialog({ open, onClose }: Props) {
                 清空进度
               </Button>
             </div>
+          </section>
+
+          {/* 关于 */}
+          <section className="space-y-2 border-t pt-5">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+              <GithubIcon className="size-4" />
+              关于
+            </h3>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              单词打字 v{APP_VERSION}
+              是一款开源的英语单词打字练习应用，基于 MIT 协议发布。欢迎访问源码仓库
+              Star / Fork，进行二次开发。
+            </p>
+            <a
+              href={REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary"
+            >
+              <GithubIcon className="size-4" />
+              github.com/jasonbai/kids-type
+            </a>
           </section>
         </div>
       </div>

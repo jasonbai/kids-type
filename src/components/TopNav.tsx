@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { Flame, Keyboard, Settings, Star, Volume2, VolumeX } from 'lucide-react';
+import GithubIcon from './GithubIcon';
+import { REPO_URL } from '../lib/repo';
 import { useLearning } from '../store/learning';
 import { setSoundEnabled } from '../lib/sound';
 import { unlockSpeech } from '../lib/speech';
@@ -103,6 +105,16 @@ export default function TopNav() {
               {keySound ? <Volume2 className="size-[1.15rem]" /> : <VolumeX className="size-[1.15rem]" />}
             </button>
             <ThemeSwitch />
+            <a
+              href={REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="查看源码（GitHub）"
+              title="开源代码：欢迎 Star / Fork 二次开发"
+              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-accent-foreground"
+            >
+              <GithubIcon className="size-[1.15rem]" />
+            </a>
             <button
               onClick={() => setSettingsOpen(true)}
               aria-label="打开设置"
