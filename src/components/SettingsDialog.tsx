@@ -347,6 +347,17 @@ export default function SettingsDialog({ open, onClose }: Props) {
               <GithubIcon className="size-4" />
               github.com/jasonbai/kids-type
             </a>
+            <p className="text-xs text-muted-foreground">
+              作者：
+              <a
+                href="https://www.jasonbai.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium transition-colors hover:text-primary"
+              >
+                尾灯白（jasonbai.com）
+              </a>
+            </p>
           </section>
         </div>
       </div>

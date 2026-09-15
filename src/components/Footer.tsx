@@ -18,6 +18,15 @@ export default function Footer() {
         </a>
         <span>·</span>
         <span>欢迎 Star / Fork 二次开发</span>
+        <span>·</span>
+        <a
+          href="https://www.jasonbai.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 font-medium transition-colors hover:text-primary"
+        >
+          作者：尾灯白
+        </a>
       </p>
     </footer>
   );
