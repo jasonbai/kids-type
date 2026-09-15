@@ -3,7 +3,7 @@ import type { Level } from '../types';
 import type { SessionItem } from '../lib/session-items';
 import { judgeKey } from '../lib/judge';
 import { speak, unlockSpeech, type SpeakOptions } from '../lib/speech';
-import { playComplete, playCorrect, playWrong, unlockAudio } from '../lib/sound';
+import { panForCode, playComplete, playTypeKey, playWrong, unlockAudio } from '../lib/sound';
 
 /** 单条练习结果（由 store 调度 SRS / 错题本 / 日志） */
 export interface WordResult {
@@ -222,6 +222,10 @@ export function useTypingSession({
         wordStartedAtRef.current = Date.now();
       }
 
+      // 打字机击键音：普通键 80ms 切片，空格更长；按物理键位左右 pan。
+      // 答错只保留低沉错误音（不叠打字机音，保证错误反馈的辨识度）。
+      const typeSound = () => playTypeKey(e.key === ' ' ? 'space' : 'default', panForCode(e.code));
+
       if (result.type === 'wrong') {
         e.preventDefault();
         playWrong();
@@ -238,11 +242,10 @@ export function useTypingSession({
       setWrongChar(null);
       setInputLen(inputLen + 1);
       setCorrectKeys((n) => n + 1);
+      typeSound();
       if (result.type === 'complete') {
         playComplete();
         finishWord();
-      } else {
-        playCorrect();
       }
     };
     window.addEventListener('keydown', onKeyDown);

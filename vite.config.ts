@@ -25,8 +25,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // 词库已 import 进包：预缓存全部构建产物即可完全离线
-        globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        // 词库已 import 进包：预缓存全部构建产物即可完全离线（含打字机音效录音）
+        globPatterns: ['**/*.{js,css,html,svg,woff2,ogg}'],
       },
     }),
   ],
