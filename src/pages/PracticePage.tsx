@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Word } from '../types';
-import { ALL_WORDS, poolFor } from '../data/vocab';
+import { allWords, poolFor } from '../data/vocab';
 import { buildDailyQueue } from '../lib/queue';
 import { buildItems } from '../lib/session-items';
 import { useLearning } from '../store/learning';
@@ -15,7 +15,7 @@ export default function PracticePage() {
   const build = useCallback(
     () =>
       buildDailyQueue({
-        allVocab: ALL_WORDS,
+        allVocab: allWords(),
         levelVocab: poolFor(settings.currentLevel),
         records,
         cursor: meta.newWordCursor[settings.currentLevel],

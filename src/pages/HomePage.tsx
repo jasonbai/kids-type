@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, BookX, Flame, Sprout } from 'lucide-react';
-import { ALL_WORDS, poolFor } from '../data/vocab';
+import { LEVEL_LABELS, allWords, poolFor } from '../data/vocab';
 import { buildDailyQueue } from '../lib/queue';
 import { todayKey } from '../lib/dateKey';
 import { activeWrongBook, useLearning } from '../store/learning';
@@ -16,7 +16,7 @@ export default function HomePage() {
   const queue = useMemo(
     () =>
       buildDailyQueue({
-        allVocab: ALL_WORDS,
+        allVocab: allWords(),
         levelVocab: poolFor(settings.currentLevel),
         records,
         cursor: meta.newWordCursor[settings.currentLevel],
@@ -29,7 +29,7 @@ export default function HomePage() {
   const todayLog = state.logs.find((l) => l.date === todayKey());
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-5 px-4 py-8">
+    <main className="mx-auto w-full max-w-4xl space-y-5 px-4 py-8">
       {/* 打卡横幅 */}
       <section className="flex items-center justify-between rounded-xl bg-primary px-6 py-5 text-primary-foreground shadow-sm">
         <div>
@@ -86,7 +86,7 @@ export default function HomePage() {
             <div className="mt-3 flex items-center text-lg font-semibold">
               学新词
               <Badge variant="secondary" className="ms-2">
-                {settings.currentLevel}
+                {LEVEL_LABELS[settings.currentLevel]}
               </Badge>
             </div>
             <div className="mt-1 text-sm text-muted-foreground">

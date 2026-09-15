@@ -6,22 +6,24 @@
 ## 功能
 
 - **打字练习**：逐字母输入、正误高亮、虚拟键盘按键高亮，配 8 指 8 色的线稿虚拟双手指法指引
+- **击键音效**：每次击键播放真实机械打字机录音的随机切片（CC0 公有领域），按物理键位左右立体声偏移；答错 / 完成反馈音由 WebAudio 合成
 - **发音**：Web Speech API 自动朗读单词与例句，音色 / 语速可调
 - **词库**：KET 1500 词 + PET 2000 词（CEFR 分级 + 词频排序），每词配 3 条儿童友好英中对照例句
+- **自定义词表**：家长 / 老师上传 .txt / .csv 词表（可含释义、音标），与内置词库同一练习 / SRS / 错题本链路
 - **三种练习模式**：单词 / 单词+例句成对 / 纯例句
 - **错题本**：打错的词自动入册，专项练习连对 2 次移出
 - **艾宾浩斯复习**：简化 SM-2 调度，每日自动安排到期复习词
 - **今日任务首页**：待复习 + 新词 + 打卡天数（streak）
 - **统计面板**：准确率、用时为主，WPM 为辅
-- **激励**：连对星星、每日打卡；键盘音效（WebAudio 合成，零音频资产）
-- **数据备份**：设置中可导出 / 导入 JSON
+- **激励**：连对星星、每日打卡
+- **数据备份**：设置中可导出 / 导入 JSON（含自定义词表）
 
 ## 快速开始
 
 ```bash
 npm install
 npm run dev        # 本地开发
-npm test           # Vitest（词库/例句数据校验 + 纯逻辑单测，71 项）
+npm test           # Vitest（词库/例句数据校验 + 纯逻辑单测，88 项）
 npm run build      # 类型检查 + 产出 dist/
 ```
 
@@ -67,5 +69,7 @@ npm run sentences   # 详见 scripts/build-sentences.mjs 头部说明
 - 词表：开源 [Words-CEFR-Dataset](https://github.com/Maximax67/Words-CEFR-Dataset)（CEFR 分级 + 词频）
 - 音标与释义：[ECDICT](https://github.com/skywind3000/ECDICT)（MIT 许可），经 `scripts/build-vocab.mjs` 生成入库
 - 例句：本项目原创（AI 辅助生成、人工校验），随仓库以相同许可分发
+- 击键音效：[BigSoundBank "Typewriter #2"](https://bigsoundbank.com/typewriter-2-s2835.html)（CC0 公有领域，
+  Hermes Precisa 305 打字机录音），切片播放实现参考 [xiaolai/type-review](https://github.com/xiaolai/type-review)（MIT）
 
 本项目以 MIT 许可开源，见 [LICENSE](./LICENSE)。

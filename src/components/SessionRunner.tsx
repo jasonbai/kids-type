@@ -110,7 +110,7 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
 
   if (items.length === 0) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-4 py-16">
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center px-4 py-16">
         <Card className="px-6 py-12 text-center">
           <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted">
             <PartyPopper className="size-6 text-muted-foreground" />
@@ -131,7 +131,7 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
   }
 
   return (
-    <main className="relative mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3 px-4 py-3">
+    <main className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col gap-3 px-4 py-3">
       {/* 大写锁定提示 */}
       {capsLockOn && (
         <p className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-warn/10 px-4 py-2 text-center text-sm font-medium text-warn">

@@ -1,4 +1,5 @@
-export type Level = 'KET' | 'PET';
+/** 词库池：KET / PET 为内置词库，CUSTOM 为家长/老师上传的自定义词表 */
+export type Level = 'KET' | 'PET' | 'CUSTOM';
 
 /** 例句（英文 + 中文翻译）；英文格式硬约束见 scripts/build-sentences.mjs */
 export interface Sentence {
@@ -18,7 +19,7 @@ export interface Word {
   phonetic: string;
   /** 中文释义（整串） */
   meaning: string;
-  /** 来源标签：['KET'] | ['PET']，物理上按文件拆分、词表全局去重 */
+  /** 来源标签：['KET'] | ['PET']（物理上按文件拆分）；自定义词表为 ['CUSTOM'] */
   levels: Level[];
 }
 

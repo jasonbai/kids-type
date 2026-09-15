@@ -57,7 +57,7 @@ export default function StatsPage() {
   }, [records, today]);
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-5 px-4 py-8">
+    <main className="mx-auto w-full max-w-4xl space-y-5 px-4 py-8">
       <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight">
         <BarChart3 className="size-5 text-target" />
         学习统计

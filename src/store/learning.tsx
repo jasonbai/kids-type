@@ -6,8 +6,9 @@ import {
   type Dispatch,
   type ReactNode,
 } from 'react';
-import type { DailyLog, Level, Meta, Settings, SrsRecord, WrongBookEntry } from '../types';
+import type { DailyLog, Level, Meta, Settings, SrsRecord, Word, WrongBookEntry } from '../types';
 import type { WordResult } from '../hooks/useTypingSession';
+import { setCustomWords } from '../data/vocab';
 import { KEYS } from '../storage/keys';
 import { load, save } from '../storage/storage';
 import { addDaysKey, todayKey } from '../lib/dateKey';
@@ -27,13 +28,17 @@ export interface LearningState {
   logs: DailyLog[];
   settings: Settings;
   meta: Meta;
+  /** 自定义词表（家长/老师上传；导入即整体替换） */
+  customWords: Word[];
 }
 
 export type LearningAction =
   | { type: 'RESULT'; result: WordResult }
   | { type: 'SETTINGS'; patch: Partial<Settings> }
   | { type: 'TOUCH_STREAK' }
-  | { type: 'ADD_STARS'; count: number };
+  | { type: 'ADD_STARS'; count: number }
+  | { type: 'IMPORT_CUSTOM'; words: Word[] }
+  | { type: 'CLEAR_CUSTOM' };
 
 export const DEFAULT_SETTINGS: Settings = {
   voiceURI: null,
@@ -51,17 +56,32 @@ export const DEFAULT_META: Meta = {
   version: 1,
   streakDays: 0,
   lastActiveDate: null,
-  newWordCursor: { KET: 0, PET: 0 },
+  newWordCursor: { KET: 0, PET: 0, CUSTOM: 0 },
   totalStars: 0,
 };
 
 function initState(): LearningState {
+  const customWords = load(KEYS.customWords, [] as Word[]);
+  const settings = { ...DEFAULT_SETTINGS, ...load(KEYS.settings, {} as Partial<Settings>) };
+  // 兼容旧数据：meta 里可能没有 CUSTOM 游标；自定义词表为空时不允许停在 CUSTOM 池
+  const storedMeta = load(KEYS.meta, {} as Partial<Meta>);
+  const meta: Meta = {
+    ...DEFAULT_META,
+    ...storedMeta,
+    newWordCursor: { ...DEFAULT_META.newWordCursor, ...storedMeta.newWordCursor },
+  };
+  if (settings.currentLevel === 'CUSTOM' && customWords.length === 0) {
+    settings.currentLevel = 'KET';
+  }
+  // 同步模块级词库注册表（useReducer 初始化先于子组件渲染，页面首帧即可取到词池）
+  setCustomWords(customWords);
   return {
     records: load(KEYS.records, {} as LearningState['records']),
     wrongBook: load(KEYS.wrongBook, {} as LearningState['wrongBook']),
     logs: load(KEYS.logs, [] as DailyLog[]),
-    settings: { ...DEFAULT_SETTINGS, ...load(KEYS.settings, {} as Partial<Settings>) },
-    meta: { ...DEFAULT_META, ...load(KEYS.meta, {} as Partial<Meta>) },
+    settings,
+    meta,
+    customWords,
   };
 }
 
@@ -141,7 +161,7 @@ function applyResult(state: LearningState, result: WordResult): LearningState {
       }
     : state.meta;
 
-  return { records, wrongBook, logs, meta, settings: state.settings };
+  return { records, wrongBook, logs, meta, settings: state.settings, customWords: state.customWords };
 }
 
 function touchStreak(state: LearningState): LearningState {
@@ -165,9 +185,32 @@ export function reducer(state: LearningState, action: LearningAction): LearningS
         ...state,
         meta: { ...state.meta, totalStars: state.meta.totalStars + Math.max(0, action.count) },
       };
+    case 'IMPORT_CUSTOM':
+      return importCustom(state, action.words);
+    case 'CLEAR_CUSTOM':
+      return importCustom(state, []);
     default:
       return state;
   }
+}
+
+/**
+ * 导入（整体替换）或清空自定义词表：
+ * 游标归零重新计数；原词表停在 CUSTOM 池而新表为空时回退 KET，
+ * 有新表时直接切到 CUSTOM（导入即用，家长无需再手动切换）。
+ */
+function importCustom(state: LearningState, words: Word[]): LearningState {
+  const nextLevel =
+    words.length > 0 ? 'CUSTOM' : state.settings.currentLevel === 'CUSTOM' ? 'KET' : state.settings.currentLevel;
+  return {
+    ...state,
+    customWords: words,
+    settings: { ...state.settings, currentLevel: nextLevel },
+    meta: {
+      ...state.meta,
+      newWordCursor: { ...state.meta.newWordCursor, CUSTOM: 0 },
+    },
+  };
 }
 
 interface LearningContextValue {
@@ -191,6 +234,11 @@ export function LearningProvider({ children }: { children: ReactNode }) {
     setSoundVolume(state.settings.keySoundVolume);
   }, [state.settings.keySound, state.settings.keySoundVolume]);
 
+  // 自定义词表 → 模块级注册表（poolFor / wordById 运行时数据源）
+  useEffect(() => {
+    setCustomWords(state.customWords);
+  }, [state.customWords]);
+
   // 持久化：状态变化即写盘（RESULT 每词完成一次，符合 §5.10 的批量节奏）
   useEffect(() => {
     save(KEYS.records, state.records);
@@ -198,6 +246,7 @@ export function LearningProvider({ children }: { children: ReactNode }) {
     save(KEYS.logs, state.logs);
     save(KEYS.settings, state.settings);
     save(KEYS.meta, state.meta);
+    save(KEYS.customWords, state.customWords);
   }, [state]);
 
   return <LearningContext.Provider value={{ state, dispatch }}>{children}</LearningContext.Provider>;

@@ -5,4 +5,6 @@ export const KEYS = {
   logs: 'te:logs',
   settings: 'te:settings',
   meta: 'te:meta',
+  /** 自定义词表（家长/老师上传的 Word[]） */
+  customWords: 'te:customwords',
 } as const;

@@ -40,11 +40,14 @@ export default function WordCard({ word, celebrating, badge, onSpeak }: Props) {
           <Volume2 className="size-5" />
         </Button>
       </div>
-      <div className="mt-1.5 text-base text-muted-foreground">
-        <span className="font-mono">{word.phonetic}</span>
-        <span className="mx-2 opacity-50">·</span>
-        {word.meaning}
-      </div>
+      {/* 自定义词表可能没有音标/释义：两者都缺省时整行隐藏 */}
+      {(word.phonetic || word.meaning) && (
+        <div className="mt-1.5 text-base text-muted-foreground">
+          {word.phonetic && <span className="font-mono">{word.phonetic}</span>}
+          {word.phonetic && word.meaning && <span className="mx-2 opacity-50">·</span>}
+          {word.meaning}
+        </div>
+      )}
     </Card>
   );
 }

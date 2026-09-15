@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  BookPlus,
   Database,
   Download,
   Music,
@@ -14,6 +15,8 @@ import GithubIcon from "./GithubIcon";
 import { APP_VERSION, REPO_URL } from '../lib/repo';
 import type { Settings } from '../types';
 import { listEnglishVoices, speak, unlockSpeech } from '../lib/speech';
+import { MAX_CUSTOM_WORDS, parseCustomWordList } from '../lib/custom-vocab';
+import { KET_WORDS, PET_WORDS } from '../data/vocab';
 import { KEYS } from '../storage/keys';
 import { load, remove, save } from '../storage/storage';
 import { useLearning } from '../store/learning';
@@ -24,7 +27,7 @@ interface Props {
   onClose: () => void;
 }
 
-/** 全量备份文件结构（= localStorage 四键 + meta） */
+/** 全量备份文件结构（= localStorage 各键 + meta；customWords 为可选旧版兼容字段） */
 interface BackupFile {
   version: number;
   records: unknown;
@@ -32,6 +35,7 @@ interface BackupFile {
   logs: unknown;
   settings: unknown;
   meta: unknown;
+  customWords?: unknown;
 }
 
 export default function SettingsDialog({ open, onClose }: Props) {
@@ -41,6 +45,7 @@ export default function SettingsDialog({ open, onClose }: Props) {
   // 音色列表异步加载（首次 getVoices 为空，voiceschanged 后刷新）
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const vocabInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -69,6 +74,7 @@ export default function SettingsDialog({ open, onClose }: Props) {
       logs: load(KEYS.logs, []),
       settings: load(KEYS.settings, {}),
       meta: load(KEYS.meta, {}),
+      customWords: load(KEYS.customWords, []),
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -99,6 +105,8 @@ export default function SettingsDialog({ open, onClose }: Props) {
       save(KEYS.logs, data.logs);
       save(KEYS.settings, data.settings);
       save(KEYS.meta, data.meta);
+      // 旧版备份没有 customWords 字段：保留当前自定义词表不覆盖
+      if (Array.isArray(data.customWords)) save(KEYS.customWords, data.customWords);
       alert('导入成功，页面即将刷新');
       location.reload();
     } catch {
@@ -110,6 +118,37 @@ export default function SettingsDialog({ open, onClose }: Props) {
     if (!confirm('确定清空全部学习进度吗？此操作不可恢复（建议先导出备份）')) return;
     Object.values(KEYS).forEach(remove);
     location.reload();
+  };
+
+  /** 导入自定义词表（.txt 每行一词 / .csv 词,释义,音标），整体替换当前词表 */
+  const importVocabList = async (file: File) => {
+    try {
+      const text = await file.text();
+      const builtin = new Set([...KET_WORDS, ...PET_WORDS].map((w) => w.word));
+      const result = parseCustomWordList(text, { csv: file.name.toLowerCase().endsWith('.csv'), builtinWords: builtin });
+      if (result.words.length === 0) {
+        alert(
+          `没有可导入的单词：请检查文件格式（每行一个 2-12 个英文字母的单词）${
+            result.inLibrary > 0 ? `；有 ${result.inLibrary} 个词与 KET/PET 词库重复` : ''
+          }`,
+        );
+        return;
+      }
+      dispatch({ type: 'IMPORT_CUSTOM', words: result.words });
+      const parts = [`已导入 ${result.words.length} 个词，已切换到"自定义"词库`];
+      if (result.inLibrary > 0) parts.push(`跳过 KET/PET 重复词 ${result.inLibrary} 个`);
+      if (result.duplicateInFile > 0) parts.push(`文件内重复 ${result.duplicateInFile} 个`);
+      if (result.invalid.length > 0) parts.push(`格式无效 ${result.invalid.length} 个`);
+      if (result.truncated) parts.push(`超出上限只保留前 ${MAX_CUSTOM_WORDS} 个`);
+      alert(parts.join('；') + '。');
+    } catch {
+      alert('词表文件读取失败');
+    }
+  };
+
+  const clearVocabList = () => {
+    if (!confirm(`确定清空自定义词表（${state.customWords.length} 个词）吗？学习进度保留。`)) return;
+    dispatch({ type: 'CLEAR_CUSTOM' });
   };
 
   return (
@@ -289,6 +328,47 @@ export default function SettingsDialog({ open, onClose }: Props) {
                 className="size-4 accent-target"
               />
             </label>
+          </section>
+
+          {/* 自定义词表 */}
+          <section className="space-y-3 border-t pt-5">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+              <BookPlus className="size-4" />
+              自定义词表
+            </h3>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              已导入 <b className="text-foreground">{state.customWords.length}</b> 个词
+              {state.customWords.length > 0 && '，可在顶部切换"自定义"词库练习'}。
+              再次导入会替换当前词表（学习进度保留）。
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => vocabInputRef.current?.click()}>
+                <Upload />
+                导入词表
+              </Button>
+              <input
+                ref={vocabInputRef}
+                type="file"
+                accept=".txt,.csv,text/plain,text/csv"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void importVocabList(f);
+                  e.target.value = '';
+                }}
+              />
+              {state.customWords.length > 0 && (
+                <Button variant="outline" onClick={clearVocabList}>
+                  <Trash2 />
+                  清空词表
+                </Button>
+              )}
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              支持 .txt（每行一个单词）或 .csv（第 1 列单词、第 2 列中文释义、第 3 列音标，后两列可选；
+              首行为表头时自动跳过）。仅支持 2-20 个英文字母的单词（带空格的词组暂不支持），最多 {MAX_CUSTOM_WORDS} 个；
+              与 KET/PET 重复的词会被跳过。自定义词暂无例句，将按单词模式练习。
+            </p>
           </section>
 
           {/* 数据 */}

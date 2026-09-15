@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addDaysKey, todayKey } from '../lib/dateKey';
+import type { Word } from '../types';
 import type { WordResult } from '../hooks/useTypingSession';
 import { CLEAR_STREAK_GOAL, DEFAULT_META, DEFAULT_SETTINGS, reducer, type LearningState } from './learning';
 
@@ -10,6 +11,7 @@ function freshState(): LearningState {
     logs: [],
     settings: { ...DEFAULT_SETTINGS },
     meta: { ...DEFAULT_META, newWordCursor: { ...DEFAULT_META.newWordCursor } },
+    customWords: [],
   };
 }
 
@@ -101,5 +103,38 @@ describe('reducer · TOUCH_STREAK / ADD_STARS / SETTINGS', () => {
     expect(s.settings.rate).toBe(0.8);
     expect(s.settings.currentLevel).toBe('PET');
     expect(s.settings.dailyNewWords).toBe(DEFAULT_SETTINGS.dailyNewWords);
+  });
+});
+
+describe('reducer · 自定义词表', () => {
+  const words: Word[] = ['tiger', 'panda'].map((w) => ({
+    id: `custom:${w}`,
+    word: w,
+    phonetic: '',
+    meaning: '',
+    levels: ['CUSTOM'],
+  }));
+
+  it('IMPORT_CUSTOM：整体替换、游标归零、自动切到 CUSTOM 池', () => {
+    let s = reducer(freshState(), { type: 'IMPORT_CUSTOM', words });
+    expect(s.customWords).toHaveLength(2);
+    expect(s.settings.currentLevel).toBe('CUSTOM');
+    expect(s.meta.newWordCursor.CUSTOM).toBe(0);
+    s = reducer(s, { type: 'RESULT', result: { ...result('custom:tiger', true), level: 'CUSTOM' } });
+    expect(s.meta.newWordCursor.CUSTOM).toBe(1);
+  });
+
+  it('CLEAR_CUSTOM：清空词表；原停在 CUSTOM 池则回退 KET', () => {
+    let s = reducer(freshState(), { type: 'IMPORT_CUSTOM', words });
+    s = reducer(s, { type: 'RESULT', result: { ...result('custom:tiger', true), level: 'CUSTOM' } });
+    s = reducer(s, { type: 'CLEAR_CUSTOM' });
+    expect(s.customWords).toHaveLength(0);
+    expect(s.settings.currentLevel).toBe('KET');
+    expect(s.meta.newWordCursor.CUSTOM).toBe(0);
+  });
+
+  it('CLEAR_CUSTOM：原本不在 CUSTOM 池时保持当前词库', () => {
+    const s = reducer(freshState(), { type: 'CLEAR_CUSTOM' });
+    expect(s.settings.currentLevel).toBe('KET');
   });
 });

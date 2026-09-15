@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { BookX, Sparkles } from 'lucide-react';
-import { WORD_BY_ID } from '../data/vocab';
+import { wordByIdOrNull } from '../data/vocab';
 import { buildItems } from '../lib/session-items';
 import { activeWrongBook, useLearning } from '../store/learning';
 import SessionRunner from '../components/SessionRunner';
@@ -20,7 +20,7 @@ export default function WrongBookPage() {
 
   const pickWords = () =>
     activeWrongBook(state)
-      .map((e) => WORD_BY_ID.get(e.wordId))
+      .map((e) => wordByIdOrNull(e.wordId))
       .filter((w): w is Word => Boolean(w))
       .slice(0, PRACTICE_LIMIT);
 
@@ -44,7 +44,7 @@ export default function WrongBookPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-4 px-4 py-8">
+    <main className="mx-auto w-full max-w-4xl space-y-4 px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight">
           <BookX className="size-5 text-wrong" />
@@ -68,13 +68,13 @@ export default function WrongBookPage() {
       ) : (
         <ul className="space-y-3">
           {entries.map((e) => {
-            const w = WORD_BY_ID.get(e.wordId);
+            const w = wordByIdOrNull(e.wordId);
             return (
               <li key={e.wordId}>
                 <Card className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-3">
-                      <span className="font-mono text-xl font-bold">{e.wordId}</span>
+                      <span className="font-mono text-xl font-bold">{w?.word ?? e.wordId}</span>
                       <span className="text-sm text-muted-foreground">{w?.phonetic}</span>
                     </div>
                     <div className="mt-0.5 truncate text-sm text-muted-foreground">{w?.meaning}</div>

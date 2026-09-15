@@ -3,6 +3,7 @@ import { NavLink, Link } from 'react-router-dom';
 import { Flame, Keyboard, Settings, Star, Volume2, VolumeX } from 'lucide-react';
 import GithubIcon from './GithubIcon';
 import { REPO_URL } from '../lib/repo';
+import { LEVEL_LABELS } from '../data/vocab';
 import { useLearning } from '../store/learning';
 import { setSoundEnabled } from '../lib/sound';
 import { unlockSpeech } from '../lib/speech';
@@ -24,6 +25,7 @@ export default function TopNav() {
   const { currentLevel, keySound } = state.settings;
   const { streakDays, totalStars } = state.meta;
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const levels: Level[] = state.customWords.length > 0 ? ['KET', 'PET', 'CUSTOM'] : ['KET', 'PET'];
 
   const switchLevel = (lv: Level) => {
     if (lv === currentLevel) return;
@@ -40,7 +42,7 @@ export default function TopNav() {
   return (
     <>
       <header className="sticky top-0 z-20 w-full border-b bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5">
           <Link to="/" className="flex items-center gap-2 text-base font-bold tracking-tight">
             <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <Keyboard className="size-4" />
@@ -79,9 +81,9 @@ export default function TopNav() {
               <Star className="size-3.5 fill-current" />
               {totalStars}
             </span>
-            {/* KET/PET 分段切换（shadcn Tabs 样式） */}
+            {/* 词库分段切换（shadcn Tabs 样式）：有自定义词表时追加"自定义" */}
             <div className="flex items-center rounded-lg bg-muted p-0.5">
-              {(['KET', 'PET'] as const).map((lv) => (
+              {levels.map((lv) => (
                 <button
                   key={lv}
                   onClick={() => switchLevel(lv)}
@@ -92,7 +94,7 @@ export default function TopNav() {
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
-                  {lv}
+                  {LEVEL_LABELS[lv]}
                 </button>
               ))}
             </div>
