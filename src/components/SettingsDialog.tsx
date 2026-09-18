@@ -376,7 +376,6 @@ export default function SettingsDialog({ open, onClose }: Props) {
             <p className="text-xs leading-relaxed text-muted-foreground">
               已导入 <b className="text-foreground">{state.customWords.length}</b> 个词
               {state.customWords.length > 0 && '，可在顶部切换"自定义"词库练习'}。
-              再次导入会替换当前词表（学习进度保留）。
             </p>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={downloadVocabTemplate}>
@@ -405,7 +404,7 @@ export default function SettingsDialog({ open, onClose }: Props) {
               )}
             </div>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              下载模板后用 Excel/WPS 替换示例，每行填写一个单词，释义和音标可留空；保存为 CSV UTF-8 后上传。
+              下载模板，替换示例单词后保存为 CSV UTF-8，再上传。释义和音标可留空，也支持每行一个单词的 TXT 文件。
             </p>
             {vocabReport && (
               <div role="status" aria-live="polite" className="space-y-2 rounded-md border p-3 text-xs leading-relaxed">
@@ -421,9 +420,7 @@ export default function SettingsDialog({ open, onClose }: Props) {
               </div>
             )}
             <p className="text-xs leading-relaxed text-muted-foreground">
-              支持 .txt（每行一个单词）或 .csv（第 1 列单词、第 2 列中文释义、第 3 列音标，后两列可选；
-              首行为表头时自动跳过）。仅支持 2-20 个英文字母的单词（带空格的词组暂不支持），最多 {MAX_CUSTOM_WORDS} 个；
-              内置已有单词也可导入，共享学习进度和例句；新词暂无例句时按单词模式练习。
+              每个单词限 2–20 个英文字母，暂不支持词组，最多 {MAX_CUSTOM_WORDS} 个。再次导入会替换当前词表，学习进度保留。
             </p>
           </section>
 
