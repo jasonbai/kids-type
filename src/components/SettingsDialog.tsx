@@ -320,14 +320,38 @@ export default function SettingsDialog({ open, onClose }: Props) {
               </p>
             </div>
             <label className="flex items-center justify-between">
-              <span className="text-sm font-medium">手势指引（虚拟双手）</span>
+              <span className="text-sm font-medium">键盘指引（虚拟键盘）</span>
               <input
                 type="checkbox"
-                checked={s.showHandGuide}
-                onChange={(e) => patch({ showHandGuide: e.target.checked })}
+                checked={s.showKeyboard}
+                onChange={(e) => patch({ showKeyboard: e.target.checked })}
                 className="size-4 accent-target"
               />
             </label>
+            <div>
+              <label className="flex items-center justify-between">
+                <span
+                  className={[
+                    'text-sm font-medium',
+                    s.showKeyboard ? '' : 'text-muted-foreground',
+                  ].join(' ')}
+                >
+                  手势指引（虚拟双手）
+                </span>
+                <input
+                  type="checkbox"
+                  checked={s.showHandGuide}
+                  disabled={!s.showKeyboard}
+                  onChange={(e) => patch({ showHandGuide: e.target.checked })}
+                  className="size-4 accent-target disabled:opacity-40"
+                />
+              </label>
+              {!s.showKeyboard && (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  虚拟双手按键盘键位定位，需先显示键盘
+                </p>
+              )}
+            </div>
           </section>
 
           {/* 自定义词表 */}

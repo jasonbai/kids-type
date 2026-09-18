@@ -81,6 +81,8 @@ export interface Settings {
   wordIntervalMs: number;
   /** 打字时显示虚拟双手指法指引（线稿手 + 活动手指高亮 + 轨迹线） */
   showHandGuide: boolean;
+  /** 打字时显示屏幕虚拟键盘（关闭后仅保留打字区与文字提示，适合进阶用户） */
+  showKeyboard: boolean;
   /** 练习模式：纯单词 / 单词+例句成对 / 纯例句 */
   practiceMode: PracticeMode;
 }
