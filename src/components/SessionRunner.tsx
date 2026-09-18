@@ -36,7 +36,7 @@ interface Props {
 /** 通用打字会话 UI：新词练习 / 复习 / 错词专项共用 */
 export default function SessionRunner({ title, items, mode, badge, onResult, onRebuild }: Props) {
   const { state, dispatch } = useLearning();
-  const { rate, voiceURI, wordIntervalMs, showHandGuide } = state.settings;
+  const { rate, voiceURI, wordIntervalMs, showHandGuide, showKeyboard } = state.settings;
   /** 首次"开始练习"引导是否已关闭（点击或按键均可开始） */
   const [startedOnce, setStartedOnce] = useState(false);
   const [summary, setSummary] = useState<SessionSummary | null>(null);
@@ -267,20 +267,23 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
                 )}
               </section>
 
-              <section
-                ref={boardRef}
-                className="relative w-full shrink-0 rounded-xl border bg-card px-4 pb-32 pt-3 shadow-sm"
-              >
-                <VirtualKeyboard targetChar={nextChar} wrongChar={wrongChar} keyRefs={keyRefs} />
-                {showHandGuide && (
-                  <FingerGuide
-                    containerRef={boardRef}
-                    keyRefs={keyRefs}
-                    targetChar={nextChar}
-                    wrongChar={wrongChar}
-                  />
-                )}
-              </section>
+              {/* 键盘板整块可关：pb-32 是给双手预留的空间，隐藏键盘时一并去掉 */}
+              {showKeyboard && (
+                <section
+                  ref={boardRef}
+                  className="relative w-full shrink-0 rounded-xl border bg-card px-4 pb-32 pt-3 shadow-sm"
+                >
+                  <VirtualKeyboard targetChar={nextChar} wrongChar={wrongChar} keyRefs={keyRefs} />
+                  {showHandGuide && (
+                    <FingerGuide
+                      containerRef={boardRef}
+                      keyRefs={keyRefs}
+                      targetChar={nextChar}
+                      wrongChar={wrongChar}
+                    />
+                  )}
+                </section>
+              )}
             </div>
           </>
         )

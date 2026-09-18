@@ -49,6 +49,7 @@ export const DEFAULT_SETTINGS: Settings = {
   dailyNewWords: 10,
   wordIntervalMs: 800,
   showHandGuide: true,
+  showKeyboard: true,
   practiceMode: 'word',
 };
 
