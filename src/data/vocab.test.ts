@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import type { Word } from '../types';
 import ketRaw from './ket.json';
 import petRaw from './pet.json';
@@ -50,5 +50,27 @@ describe('词库格式校验', () => {
   it('两个文件不相交（全局去重）', () => {
     const ketIds = new Set(ket.map((w) => w.id));
     for (const w of pet) expect(ketIds.has(w.id)).toBe(false);
+  });
+});
+
+
+import { allWords, poolFor, setCustomWords, wordByIdOrNull, sentencesOf } from './vocab';
+import { makeCustomWord } from '../lib/custom-vocab';
+
+describe('自选词库复用内置词', () => {
+  afterEach(() => setCustomWords([]));
+  it('自选内容独立，全局按 ID 去重且保留内置内容', () => {
+    const builtin = ket[0]!;
+    const custom = { ...builtin, meaning: '上传释义' };
+    const extra = makeCustomWord('astrophysicist');
+    setCustomWords([custom, extra]);
+    expect(poolFor('CUSTOM')).toEqual([custom, extra]);
+    expect(wordByIdOrNull(builtin.id)).toEqual(builtin);
+    expect(allWords().filter(w => w.id === builtin.id)).toHaveLength(1);
+    expect(sentencesOf(custom.id)).toEqual(sentencesOf(builtin.id));
+    expect(wordByIdOrNull(extra.id)).toEqual(extra);
+    setCustomWords([]);
+    expect(wordByIdOrNull(builtin.id)).toEqual(builtin);
+    expect(wordByIdOrNull(extra.id)).toBeUndefined();
   });
 });

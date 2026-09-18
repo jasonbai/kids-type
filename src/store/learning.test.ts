@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { parseCustomWordList } from '../lib/custom-vocab';
+import { KET_WORDS } from '../data/vocab';
 import { addDaysKey, todayKey } from '../lib/dateKey';
 import type { Word } from '../types';
 import type { WordResult } from '../hooks/useTypingSession';
@@ -159,4 +161,21 @@ describe('reducer · 自定义词表', () => {
     const s = reducer(freshState(), { type: 'CLEAR_CUSTOM' });
     expect(s.settings.currentLevel).toBe('KET');
   });
+});
+
+
+it('导入内置词后共享 SRS 和错题记录，清空后保留进度', () => {
+  const word = KET_WORDS[0]!;
+  let s = reducer(freshState(), { type: 'RESULT', result: result(word.word, false, ['x']) });
+  const record = s.records[word.id];
+  const parsed = parseCustomWordList(word.word, { csv: false, builtinWords: new Map([[word.word, word]]) });
+  s = reducer(s, { type: 'IMPORT_CUSTOM', words: parsed.words });
+  s = reducer(s, { type: 'RESULT', result: { ...result(word.word, false, ['y']), level: 'CUSTOM' } });
+  expect(Object.keys(s.records)).toEqual([word.id]);
+  expect(s.records[word.id]).toEqual(record);
+  expect(Object.keys(s.wrongBook)).toEqual([word.id]);
+  expect(s.wrongBook[word.id].wrongCount).toBe(2);
+  s = reducer(s, { type: 'CLEAR_CUSTOM' });
+  expect(s.records[word.id]).toEqual(record);
+  expect(s.wrongBook[word.id].wrongCount).toBe(2);
 });

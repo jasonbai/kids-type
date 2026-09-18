@@ -24,7 +24,12 @@ let wordById: Map<string, Word> = new Map(BUILTIN_WORDS.map((w) => [w.id, w]));
 /** 注入/替换自定义词库（应用启动、导入、清空时调用；内部重建缓存索引） */
 export function setCustomWords(words: Word[]): void {
   customWords = words;
-  cachedAll = [...BUILTIN_WORDS, ...customWords];
+  // Canonical builtin entries win; custom overrides belong only to the custom pool.
+  const canonical = new Map(BUILTIN_WORDS.map(w => [w.id, w]));
+  for (const word of customWords) {
+    if (!canonical.has(word.id)) canonical.set(word.id, word);
+  }
+  cachedAll = [...canonical.values()];
   wordById = new Map(cachedAll.map((w) => [w.id, w]));
 }
 

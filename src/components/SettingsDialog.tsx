@@ -15,7 +15,8 @@ import GithubIcon from "./GithubIcon";
 import { APP_VERSION, REPO_URL } from '../lib/repo';
 import type { Settings } from '../types';
 import { listEnglishVoices, speak, unlockSpeech } from '../lib/speech';
-import { MAX_CUSTOM_WORDS, parseCustomWordList } from '../lib/custom-vocab';
+import { customVocabTemplate, MAX_CUSTOM_WORDS, parseCustomWordList } from '../lib/custom-vocab';
+import type { CustomParseResult } from '../lib/custom-vocab';
 import { KET_WORDS, PET_WORDS } from '../data/vocab';
 import { KEYS } from '../storage/keys';
 import { load, remove, save } from '../storage/storage';
@@ -44,6 +45,8 @@ export default function SettingsDialog({ open, onClose }: Props) {
 
   // 音色列表异步加载（首次 getVoices 为空，voiceschanged 后刷新）
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [vocabReport, setVocabReport] = useState<{ message: string; result?: CustomParseResult } | null>(null);
+  const [importingVocab, setImportingVocab] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const vocabInputRef = useRef<HTMLInputElement>(null);
 
@@ -120,35 +123,45 @@ export default function SettingsDialog({ open, onClose }: Props) {
     location.reload();
   };
 
-  /** 导入自定义词表（.txt 每行一词 / .csv 词,释义,音标），整体替换当前词表 */
+  const downloadVocabTemplate = () => {
+    const url = URL.createObjectURL(new Blob([customVocabTemplate()], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '自定义词表模板.csv';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   const importVocabList = async (file: File) => {
+    if (!/\.(txt|csv)$/i.test(file.name)) {
+      setVocabReport({ message: '不支持此文件类型。请选择 TXT 或 CSV 文件；Excel/WPS 表格请另存为 CSV UTF-8 后上传。' });
+      return;
+    }
+    setImportingVocab(true);
+    setVocabReport(null);
     try {
       const text = await file.text();
-      const builtin = new Set([...KET_WORDS, ...PET_WORDS].map((w) => w.word));
+      const builtin = new Map([...KET_WORDS, ...PET_WORDS].map(w => [w.word, w]));
       const result = parseCustomWordList(text, { csv: file.name.toLowerCase().endsWith('.csv'), builtinWords: builtin });
       if (result.words.length === 0) {
-        alert(
-          `没有可导入的单词：请检查文件格式（每行一个 2-12 个英文字母的单词）${
-            result.inLibrary > 0 ? `；有 ${result.inLibrary} 个词与 KET/PET 词库重复` : ''
-          }`,
-        );
+        setVocabReport({ message: result.empty
+          ? '文件为空或只有表头，请填写单词后重新上传。原词表未更改。'
+          : '没有有效单词，请按下方提示修改后重新上传。原词表未更改。', result });
         return;
       }
       dispatch({ type: 'IMPORT_CUSTOM', words: result.words });
-      const parts = [`已导入 ${result.words.length} 个词，已切换到"自定义"词库`];
-      if (result.inLibrary > 0) parts.push(`跳过 KET/PET 重复词 ${result.inLibrary} 个`);
-      if (result.duplicateInFile > 0) parts.push(`文件内重复 ${result.duplicateInFile} 个`);
-      if (result.invalid.length > 0) parts.push(`格式无效 ${result.invalid.length} 个`);
-      if (result.truncated) parts.push(`超出上限只保留前 ${MAX_CUSTOM_WORDS} 个`);
-      alert(parts.join('；') + '。');
+      setVocabReport({ message: `${result.invalidCount || result.truncated ? '部分导入成功' : '导入成功'}：已导入 ${result.words.length} 个词，已切换到“自定义”词库。`, result });
     } catch {
-      alert('词表文件读取失败');
+      setVocabReport({ message: '词表文件读取失败，请重新选择文件后重试。' });
+    } finally {
+      setImportingVocab(false);
     }
   };
 
   const clearVocabList = () => {
     if (!confirm(`确定清空自定义词表（${state.customWords.length} 个词）吗？学习进度保留。`)) return;
     dispatch({ type: 'CLEAR_CUSTOM' });
+    setVocabReport(null);
   };
 
   return (
@@ -366,9 +379,12 @@ export default function SettingsDialog({ open, onClose }: Props) {
               再次导入会替换当前词表（学习进度保留）。
             </p>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => vocabInputRef.current?.click()}>
+              <Button variant="outline" onClick={downloadVocabTemplate}>
+                <Download />下载模板
+              </Button>
+              <Button variant="outline" disabled={importingVocab} onClick={() => vocabInputRef.current?.click()}>
                 <Upload />
-                导入词表
+                {importingVocab ? '正在导入…' : '导入词表'}
               </Button>
               <input
                 ref={vocabInputRef}
@@ -382,16 +398,32 @@ export default function SettingsDialog({ open, onClose }: Props) {
                 }}
               />
               {state.customWords.length > 0 && (
-                <Button variant="outline" onClick={clearVocabList}>
+                <Button variant="outline" disabled={importingVocab} onClick={clearVocabList}>
                   <Trash2 />
                   清空词表
                 </Button>
               )}
             </div>
             <p className="text-xs leading-relaxed text-muted-foreground">
+              下载模板后用 Excel/WPS 替换示例，每行填写一个单词，释义和音标可留空；保存为 CSV UTF-8 后上传。
+            </p>
+            {vocabReport && (
+              <div role="status" aria-live="polite" className="space-y-2 rounded-md border p-3 text-xs leading-relaxed">
+                <p>{vocabReport.message}</p>
+                {vocabReport.result && <>
+                  <p>导入 {vocabReport.result.words.length} 个；文件内重复 {vocabReport.result.duplicateInFile} 个；无效行 {vocabReport.result.invalidCount} 条。</p>
+                  {vocabReport.result.truncated && <p>超过上限，仅保留前 {MAX_CUSTOM_WORDS} 个有效且不重复的单词。</p>}
+                  {vocabReport.result.invalid.length > 0 && <ul className="max-h-40 space-y-1 overflow-auto break-words">
+                    {vocabReport.result.invalid.map(issue => <li key={issue.line}>第 {issue.line} 行{issue.value && `（${issue.value}）`}：{issue.reason}</li>)}
+                  </ul>}
+                  {vocabReport.result.invalidCount > 20 && <p>仅展示前 20 条错误，请修改后重新上传。</p>}
+                </>}
+              </div>
+            )}
+            <p className="text-xs leading-relaxed text-muted-foreground">
               支持 .txt（每行一个单词）或 .csv（第 1 列单词、第 2 列中文释义、第 3 列音标，后两列可选；
               首行为表头时自动跳过）。仅支持 2-20 个英文字母的单词（带空格的词组暂不支持），最多 {MAX_CUSTOM_WORDS} 个；
-              与 KET/PET 重复的词会被跳过。自定义词暂无例句，将按单词模式练习。
+              内置已有单词也可导入，共享学习进度和例句；新词暂无例句时按单词模式练习。
             </p>
           </section>
 

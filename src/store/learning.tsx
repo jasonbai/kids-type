@@ -8,7 +8,7 @@ import {
 } from 'react';
 import type { DailyLog, Level, Meta, Settings, SrsRecord, Word, WrongBookEntry } from '../types';
 import type { WordResult } from '../hooks/useTypingSession';
-import { setCustomWords } from '../data/vocab';
+import { getCustomWords, setCustomWords } from '../data/vocab';
 import { KEYS } from '../storage/keys';
 import { load, save } from '../storage/storage';
 import { addDaysKey, todayKey } from '../lib/dateKey';
@@ -237,10 +237,8 @@ export function LearningProvider({ children }: { children: ReactNode }) {
     setSoundVolume(state.settings.keySoundVolume);
   }, [state.settings.keySound, state.settings.keySoundVolume]);
 
-  // 自定义词表 → 模块级注册表（poolFor / wordById 运行时数据源）
-  useEffect(() => {
-    setCustomWords(state.customWords);
-  }, [state.customWords]);
+  // 子页面渲染时即需读取新词表，不能等 effect 再更新注册表。
+  if (getCustomWords() !== state.customWords) setCustomWords(state.customWords);
 
   // 持久化：状态变化即写盘（RESULT 每词完成一次，符合 §5.10 的批量节奏）
   useEffect(() => {

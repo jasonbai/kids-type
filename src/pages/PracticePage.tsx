@@ -29,7 +29,7 @@ export default function PracticePage() {
   useEffect(() => {
     setSessionWords(build());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.currentLevel]);
+  }, [settings.currentLevel, state.customWords]);
 
   // 引用必须稳定：这样 store 每次 RESULT 触发重渲染时不会重置会话
   const items = useMemo(() => buildItems(sessionWords, mode), [sessionWords, mode]);

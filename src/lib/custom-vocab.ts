@@ -1,133 +1,106 @@
 import type { Level, Word } from '../types';
 
-/** 自定义词表上限（localStorage 容量友好；超出截断并在导入报告中提示） */
 export const MAX_CUSTOM_WORDS = 1000;
-
-/**
- * 自定义词表单词约束：2-20 个小写英文字母。
- * 比内置 KET/PET 词库（≤12 字母）宽松——自定义词表多为进阶词，
- * 如 astrophysicist(14)；打字判定只覆盖字母键，长度本身无硬阻碍。
- */
 const WORD_RE = /^[a-z]{2,20}$/;
-
-/** csv 首列是这些表头词时，跳过首行 */
 const HEADER_RE = /^(word|words|单词|词汇|单词表)$/i;
 
 export interface CustomParseResult {
-  /** 可入库的自定义词条（wordId = custom:<word>） */
   words: Word[];
-  /** 与 KET/PET 词库重复被跳过的词数 */
-  inLibrary: number;
-  /** 文件内重复（只保留首个）被忽略的词数 */
   duplicateInFile: number;
-  /** 不合法被跳过的词（最多保留前 20 个用于提示，单个词最长保留 50 字符） */
-  invalid: string[];
-  /** 是否因超出上限被截断 */
+  invalidCount: number;
+  invalid: Array<{ line: number; value: string; reason: string }>;
   truncated: boolean;
+  empty: boolean;
 }
 
-/** 由原始词构造自定义词条；word 必须已通过 WORD_RE 校验 */
 export function makeCustomWord(word: string, meaning = '', phonetic = ''): Word {
   return { id: `custom:${word}`, word, phonetic, meaning, levels: ['CUSTOM'] as Level[] };
 }
 
-/** 行 → 规范化小写词；不合法返回 null */
-function normalizeWord(raw: string): string | null {
-  const word = raw.trim().toLowerCase();
-  return WORD_RE.test(word) ? word : null;
-}
-
-/** 单行 CSV 解析：支持双引号包裹（内含逗号 / 转义 ""） */
-export function parseCsvLine(line: string): string[] {
-  const fields: string[] = [];
-  let cur = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (inQuotes) {
+/** RFC-style quoted fields, including escaped quotes and embedded newlines. */
+function csvRecords(text: string) {
+  const records: Array<{ fields: string[]; line: number; malformed: boolean }> = [];
+  let fields: string[] = [], field = '', quoted = false, closed = false, malformed = false;
+  let line = 1, start = 1;
+  const pushField = () => { fields.push(field); field = ''; closed = false; };
+  const pushRecord = () => {
+    pushField();
+    records.push({ fields, line: start, malformed });
+    fields = []; malformed = false;
+  };
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (quoted) {
       if (ch === '"') {
-        if (line[i + 1] === '"') {
-          cur += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        cur += ch;
-      }
-    } else if (ch === '"') {
-      inQuotes = true;
-    } else if (ch === ',') {
-      fields.push(cur);
-      cur = '';
-    } else {
-      cur += ch;
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else { quoted = false; closed = true; }
+      } else { field += ch; if (ch === '\n') line++; }
+    } else if (ch === ',') pushField();
+    else if (ch === '\n') { pushRecord(); line++; start = line; }
+    else if (ch === '"' && field === '' && !closed) quoted = true;
+    else {
+      if (ch === '"' || (closed && ch.trim() !== '')) malformed = true;
+      field += ch;
     }
   }
-  fields.push(cur);
-  return fields;
+  if (quoted) malformed = true;
+  pushRecord();
+  return records;
 }
 
-/**
- * 解析家长/老师上传的词表文本。
- * - .txt：每行一个单词
- * - .csv：第 1 列单词、第 2 列中文释义（可选）、第 3 列音标（可选）；
- *   首行为表头（word/单词 等）时自动跳过
- *
- * 规则：规范化为小写；跳过与内置 KET/PET 重复的词（避免同词双份 SRS 记录）、
- * 文件内重复只保留首个；超出 MAX_CUSTOM_WORDS 截断。
- * 替换式导入：返回值即完整新词表。
- */
+export function parseCsvLine(line: string): string[] {
+  return csvRecords(line)[0]!.fields;
+}
+
+export function customVocabTemplate(): string {
+  const rows = [
+    ['单词', '中文释义', '音标'],
+    ['apple', '苹果', '/ˈæpəl/'],
+    ['banana', '香蕉', '/bəˈnɑːnə/'],
+    ['astrophysicist', '天体物理学家', '/ˌæstrəʊˈfɪzɪsɪst/'],
+  ];
+  return '\uFEFF' + rows.map(row => row.map(cell => /[",\r\n]/.test(cell)
+    ? `"${cell.replace(/"/g, '""')}"` : cell).join(',')).join('\r\n') + '\r\n';
+}
+
+/** Replacement list; builtin IDs share progress while custom display fields stay local. */
 export function parseCustomWordList(
   text: string,
-  opts: { csv: boolean; builtinWords: ReadonlySet<string> },
+  opts: { csv: boolean; builtinWords: ReadonlyMap<string, Word> },
 ): CustomParseResult {
-  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
-  const words: Word[] = [];
+  const normalized = text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+  const records = opts.csv ? csvRecords(normalized) : normalized.split('\n').map((value, index) =>
+    ({ fields: [value], line: index + 1, malformed: false }));
+  const result: CustomParseResult = {
+    words: [], duplicateInFile: 0, invalidCount: 0, invalid: [], truncated: false, empty: true,
+  };
   const seen = new Set<string>();
-  const invalid: string[] = [];
-  let inLibrary = 0;
-  let duplicateInFile = 0;
-  let truncated = false;
-
-  // 表头识别走同一 CSV 解析（兼容 Excel 等"全字段带引号"的导出格式）
-  const firstLineCells = opts.csv && lines.length > 0 ? parseCsvLine(lines[0] ?? '') : [];
-  const startLine =
-    firstLineCells.length > 0 && HEADER_RE.test((firstLineCells[0] ?? '').trim()) ? 1 : 0;
-
-  for (let i = startLine; i < lines.length; i++) {
-    const line = lines[i];
-    if (line === undefined || line.trim() === '') continue;
-
-    let rawWord = line;
-    let meaning = '';
-    let phonetic = '';
-    if (opts.csv) {
-      const fields = parseCsvLine(line);
-      rawWord = fields[0] ?? '';
-      meaning = (fields[1] ?? '').trim();
-      phonetic = (fields[2] ?? '').trim();
+  let first = true;
+  for (const record of records) {
+    const { fields, line, malformed } = record;
+    if (!malformed && fields.every(field => field.trim() === '')) continue;
+    if (first && opts.csv && !malformed && HEADER_RE.test(fields[0]!.trim())) {
+      first = false; continue;
     }
-    const word = normalizeWord(rawWord);
-    if (!word) {
-      if (invalid.length < 20) invalid.push(rawWord.trim().slice(0, 50));
+    first = false;
+    result.empty = false;
+    const word = fields[0]!.trim().toLowerCase();
+    const reason = malformed ? 'CSV 引号格式不正确' : fields.length > 3
+      ? '最多三列；含英文逗号的内容需用双引号包裹' : !WORD_RE.test(word)
+        ? '单词须为 2–20 个英文字母，不支持空格、数字或标点' : '';
+    if (reason) {
+      result.invalidCount++;
+      if (result.invalid.length < 20) result.invalid.push({ line, value: fields[0]!.trim().slice(0, 50), reason });
       continue;
     }
-    if (opts.builtinWords.has(word)) {
-      inLibrary++;
-      continue;
-    }
-    if (seen.has(word)) {
-      duplicateInFile++;
-      continue;
-    }
-    if (words.length >= MAX_CUSTOM_WORDS) {
-      truncated = true;
-      break;
-    }
+    if (seen.has(word)) { result.duplicateInFile++; continue; }
     seen.add(word);
-    words.push(makeCustomWord(word, meaning, phonetic));
+    if (result.words.length >= MAX_CUSTOM_WORDS) { result.truncated = true; continue; }
+    const builtin = opts.builtinWords.get(word);
+    const meaning = fields[1]?.trim() || builtin?.meaning || '';
+    const phonetic = fields[2]?.trim() || builtin?.phonetic || '';
+    result.words.push(builtin ? { ...builtin, meaning, phonetic, levels: ['CUSTOM'] }
+      : makeCustomWord(word, meaning, phonetic));
   }
-
-  return { words, inLibrary, duplicateInFile, invalid, truncated };
+  return result;
 }
