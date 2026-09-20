@@ -68,14 +68,14 @@ export default function TopNav() {
           </nav>
           <div className="ml-auto flex items-center gap-1.5">
             <span
-              className="inline-flex items-center gap-1 rounded-md bg-warn/10 px-2 py-1 text-sm font-bold text-warn"
+              className="inline-flex items-center gap-1 rounded-md bg-warn/10 soft:bg-warn-soft px-2 py-1 text-sm font-bold text-warn"
               title="连续打卡天数"
             >
               <Flame className="size-3.5 fill-current" />
               {streakDays}
             </span>
             <span
-              className="inline-flex items-center gap-1 rounded-md bg-warn/10 px-2 py-1 text-sm font-bold text-warn"
+              className="inline-flex items-center gap-1 rounded-md bg-warn/10 soft:bg-warn-soft px-2 py-1 text-sm font-bold text-warn"
               title="累计星星（连对每满 5 词 +1）"
             >
               <Star className="size-3.5 fill-current" />

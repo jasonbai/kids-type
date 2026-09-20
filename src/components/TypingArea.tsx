@@ -18,9 +18,9 @@ export default function TypingArea({ word, nextIndex, wrongIndex = null }: Props
             className={[
               'flex h-12 w-10 items-center justify-center rounded-lg border-2 font-mono text-2xl font-bold transition-colors md:h-14 md:w-12 md:text-3xl',
               state === 'pending' && 'border-input bg-card text-foreground',
-              state === 'target' && 'scale-105 border-target bg-target/5 text-foreground shadow-sm',
-              state === 'done' && 'border-correct bg-correct/10 text-correct',
-              state === 'wrong' && 'animate-shake border-wrong bg-wrong/10 text-wrong',
+              state === 'target' && 'soft:underline soft:decoration-target soft:decoration-2 soft:underline-offset-8 scale-105 border-target bg-target/5 soft:bg-target-soft text-foreground shadow-sm',
+              state === 'done' && 'border-correct bg-correct/10 soft:bg-correct-soft text-correct',
+              state === 'wrong' && 'animate-shake border-wrong bg-wrong/10 soft:bg-wrong-soft text-wrong',
             ]
               .filter(Boolean)
               .join(' ')}

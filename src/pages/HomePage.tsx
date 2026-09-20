@@ -37,13 +37,13 @@ export default function HomePage() {
       {/* 打卡横幅 */}
       <section className="flex items-center justify-between rounded-xl bg-primary px-6 py-5 text-primary-foreground shadow-sm">
         <div>
-          <div className="flex items-center gap-1.5 text-sm font-medium text-primary-foreground/70">
+          <div className="flex items-center gap-1.5 text-sm font-medium text-primary-foreground/70 soft:text-primary-foreground">
             <Flame className="size-4 fill-current" />
             连续打卡
           </div>
           <div className="mt-1 text-3xl font-extrabold tracking-tight">{meta.streakDays} 天</div>
         </div>
-        <div className="text-right text-sm text-primary-foreground/70">
+        <div className="text-right text-sm text-primary-foreground/70 soft:text-primary-foreground">
           {todayLog ? (
             <>
               今日已练 <b className="text-lg text-primary-foreground">{todayLog.wordsTyped}</b> 词
@@ -64,7 +64,7 @@ export default function HomePage() {
       <section className="grid gap-4 sm:grid-cols-2">
         <Link to="/review" className="group">
           <Card className="h-full gap-0 p-6 transition-colors hover:border-review/50 hover:shadow-md">
-            <span className="flex size-10 items-center justify-center rounded-lg bg-review/10 text-review">
+            <span className="flex size-10 items-center justify-center rounded-lg bg-review/10 soft:bg-review-soft text-review">
               <BookOpen className="size-5" />
             </span>
             <div className="mt-3 text-lg font-semibold">复习到期词</div>
@@ -84,7 +84,7 @@ export default function HomePage() {
 
         <Link to="/practice" className="group">
           <Card className="h-full gap-0 p-6 transition-colors hover:border-primary/40 hover:shadow-md">
-            <span className="flex size-10 items-center justify-center rounded-lg bg-target/10 text-target">
+            <span className="flex size-10 items-center justify-center rounded-lg bg-target/10 soft:bg-target-soft text-target">
               <Sprout className="size-5" />
             </span>
             <div className="mt-3 flex items-center text-lg font-semibold">
@@ -116,7 +116,7 @@ export default function HomePage() {
       <Link to="/wrong">
         <Card className="flex items-center justify-between px-6 py-5 transition-colors hover:shadow-md">
           <div className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-lg bg-wrong/10 text-wrong">
+            <span className="flex size-10 items-center justify-center rounded-lg bg-wrong/10 soft:bg-wrong-soft text-wrong">
               <BookX className="size-5" />
             </span>
             <div>

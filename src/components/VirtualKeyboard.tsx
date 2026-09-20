@@ -41,13 +41,16 @@ export default function VirtualKeyboard({ targetChar, wrongChar, keyRefs }: Prop
           'relative flex h-11 flex-col items-center justify-center rounded-xl border-2 bg-card font-mono font-semibold text-foreground transition-all duration-150 md:h-12',
           isWide ? 'w-40 text-xs md:w-52' : 'w-11 text-lg md:w-12 md:text-xl',
           isWrong
-            ? 'scale-110 border-wrong bg-wrong/10 text-wrong shadow-md'
+            ? 'scale-110 border-wrong bg-wrong/10 soft:bg-wrong-soft text-wrong shadow-md'
             : isTarget
-              ? 'scale-110 border-current shadow-md'
+              ? 'scale-110 border-current shadow-md soft:bg-target-soft soft:after:absolute soft:after:bottom-1 soft:after:h-0.5 soft:after:w-4 soft:after:rounded soft:after:bg-target'
               : 'border-input hover:border-ring/50',
         )}
         style={
-          isTarget && !isWrong && finger ? { color: finger.color, borderColor: finger.color } : undefined
+          isTarget && !isWrong ? {
+            color: `var(--key-target-foreground, ${finger?.color ?? 'var(--target)'})`,
+            borderColor: `var(--finger-guide, ${finger?.color ?? 'var(--target)'})`,
+          } : undefined
         }
       >
         {label}
@@ -57,7 +60,7 @@ export default function VirtualKeyboard({ targetChar, wrongChar, keyRefs }: Prop
         {isTarget && !isWrong && finger && (
           <span
             className="absolute -bottom-1 h-2 w-2 rounded-full ring-2 ring-card"
-            style={{ backgroundColor: finger.color }}
+            style={{ backgroundColor: `var(--finger-guide, ${finger.color})` }}
           />
         )}
       </button>

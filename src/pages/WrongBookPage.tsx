@@ -83,14 +83,14 @@ export default function WrongBookPage() {
                     {e.wrongLetters.map((l) => (
                       <span
                         key={l}
-                        className="rounded-md bg-wrong/10 px-2 py-0.5 font-mono text-sm font-bold uppercase text-wrong"
+                        className="rounded-md bg-wrong/10 soft:bg-wrong-soft px-2 py-0.5 font-mono text-sm font-bold uppercase text-wrong"
                         title="常错字母"
                       >
                         {l}
                       </span>
                     ))}
                     <Badge variant="secondary">错 {e.wrongCount} 次</Badge>
-                    <span className="rounded-md bg-review/10 px-2 py-0.5 text-xs font-medium text-review">
+                    <span className="rounded-md bg-review/10 soft:bg-review-soft px-2 py-0.5 text-xs font-medium text-review">
                       连对 {e.clearStreak}/2
                     </span>
                   </div>

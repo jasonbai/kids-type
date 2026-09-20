@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark' | 'soft-paper' | 'system';
 
 /** 与 index.html 首屏脚本共用同一个 key */
 const STORAGE_KEY = 'te:theme';
@@ -23,9 +23,12 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 function readStoredTheme(): Theme {
   try {
     const t = localStorage.getItem(STORAGE_KEY);
-    return t === 'light' || t === 'dark' ? t : 'system';
+    // 首次访问默认纸感；保留用户明确选择的主题（包括跟随系统）。
+    return t === 'light' || t === 'dark' || t === 'soft-paper' || t === 'system'
+      ? t
+      : 'soft-paper';
   } catch {
-    return 'system';
+    return 'soft-paper';
   }
 }
 
@@ -36,6 +39,7 @@ function systemPrefersDark() {
 function applyTheme(theme: Theme) {
   const dark = theme === 'dark' || (theme === 'system' && systemPrefersDark());
   document.documentElement.classList.toggle('dark', dark);
+  document.documentElement.classList.toggle('soft-paper', theme === 'soft-paper');
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -52,9 +56,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    applyTheme(theme);
     // 跟随系统时，系统切换深浅色需实时同步（首屏脚本已保证初始正确）
     if (theme !== 'system') return;
-    applyTheme('system');
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const onChange = () => applyTheme('system');
     media.addEventListener('change', onChange);

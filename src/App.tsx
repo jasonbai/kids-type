@@ -16,7 +16,7 @@ export default function App() {
         <div className="flex min-h-svh flex-col bg-background text-foreground">
           <TopNav />
           {/* 窄屏提示：指法练习需要实体键盘 */}
-          <p className="bg-warn/10 px-4 py-2 text-center text-sm font-medium text-warn md:hidden">
+          <p className="bg-warn/10 soft:bg-warn-soft px-4 py-2 text-center text-sm font-medium text-warn md:hidden">
             📱 打字练习需要实体键盘，请在电脑或配有键盘的平板上使用
           </p>
           <Routes>

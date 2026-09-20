@@ -134,7 +134,7 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
     <main className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col gap-3 px-4 py-3">
       {/* 大写锁定提示 */}
       {capsLockOn && (
-        <p className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-warn/10 px-4 py-2 text-center text-sm font-medium text-warn">
+        <p className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-warn/10 soft:bg-warn-soft px-4 py-2 text-center text-sm font-medium text-warn">
           <TriangleAlert className="size-4 shrink-0" />
           大写锁定（CapsLock）已开启，请关闭后再继续
         </p>
@@ -143,7 +143,7 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
       {phase === 'done' && summary ? (
         <div className="flex min-h-0 flex-1 flex-col justify-center">
           <Card className="px-6 py-10 text-center">
-          <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-correct/10">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-correct/10 soft:bg-correct-soft">
             <PartyPopper className="size-6 text-correct" />
           </span>
           <h2 className="mt-3 text-2xl font-bold tracking-tight">{title}完成！</h2>
@@ -196,7 +196,7 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
               <span className="flex items-center gap-2">
                 {title} · 第 {index + 1} / {total} {unit}
                 {combo >= 2 && (
-                  <span className="inline-flex animate-celebrate items-center gap-1 rounded-md bg-warn/10 px-2 py-0.5 text-xs font-bold text-warn">
+                  <span className="inline-flex animate-celebrate items-center gap-1 rounded-md bg-warn/10 soft:bg-warn-soft px-2 py-0.5 text-xs font-bold text-warn">
                     <Flame className="size-3 fill-current" />
                     连对 {combo}
                   </span>
@@ -254,8 +254,8 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
                 )}
                 {hint && nextChar ? (
                   <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: hint.color }} />
-                    用<b style={{ color: hint.color }}>{hint.label}</b>
+                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: `var(--finger-guide, ${hint.color})` }} />
+                    用<b style={{ color: `var(--finger-guide, ${hint.color})` }}>{hint.label}</b>
                     按{' '}
                     <b className="font-mono uppercase text-foreground">
                       {nextChar === ' ' ? '空格' : nextChar}

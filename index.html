@@ -6,14 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>单词打字练习 · KET/PET</title>
     <script>
-      // 首屏前同步主题，避免暗色用户看到白色闪烁（key 与 ThemeProvider 一致）
+      // 首屏前同步主题，避免深色 / 纸感用户看到白色闪烁（与 ThemeProvider 一致）
       (function () {
         try {
-          var t = localStorage.getItem('te:theme') || 'system';
+          var t;
+          try { t = localStorage.getItem('te:theme'); } catch (e) {}
+          if (t !== 'light' && t !== 'dark' && t !== 'soft-paper' && t !== 'system') t = 'soft-paper';
           var dark =
             t === 'dark' ||
             (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
           document.documentElement.classList.toggle('dark', dark);
+          document.documentElement.classList.toggle('soft-paper', t === 'soft-paper');
         } catch (e) {}
       })();
     </script>

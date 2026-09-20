@@ -12,8 +12,8 @@ interface Props {
 }
 
 /* ---------- 视觉参数（长度按 56px 键宽归一，运行时乘 scale 适配小屏） ---------- */
-/** 手部轮廓色（slate-400，浅/深主题下均可读，故不走 token） */
-const OUTLINE = '#94a3b8';
+/** 手部轮廓色：保留原主题，纸感使用独立边界色 */
+const OUTLINE = 'var(--hand-outline, #94a3b8)';
 /** 静止时指尖距键盘底边的间隙（中指最长、小指最短） */
 const REST_TIP_GAP: Record<FingerNo, number> = { 1: 12, 2: 5, 3: 10, 4: 21 };
 /** 手指半宽 */
@@ -173,7 +173,7 @@ function computeGeo(
     if (key && rest) {
       active = {
         fingerId: activeId,
-        color: FINGERS[activeId].color,
+        color: `var(--finger-guide, ${FINGERS[activeId].color})`,
         finger: extendFinger(rest, key.cx, kbBottom, s),
         kx: key.cx,
         kbY: key.bottom,

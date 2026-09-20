@@ -42,9 +42,9 @@ export default function SentenceTypingArea({ sentence, nextIndex, wrongIndex = n
             className={cn(
               'rounded px-0.5 transition-colors',
               state === 'pending' && 'text-foreground',
-              state === 'target' && 'scale-110 bg-target/10 text-target',
+              state === 'target' && 'soft:underline soft:decoration-2 soft:underline-offset-4 scale-110 bg-target/10 soft:bg-target-soft text-target',
               state === 'done' && 'text-correct',
-              state === 'wrong' && 'animate-shake bg-wrong/10 text-wrong',
+              state === 'wrong' && 'animate-shake bg-wrong/10 soft:bg-wrong-soft text-wrong',
             )}
             style={{ display: 'inline-block' }}
           >

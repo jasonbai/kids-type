@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant soft (&:is(.soft-paper *));
 
 /* ------------------------------------------------------------------ */
 /* 设计 tokens（对齐 shadcn-admin：oklch 色板 + .dark 暗色变体）          */
@@ -26,7 +27,7 @@
   --input: oklch(0.929 0.013 255.508);
   --ring: oklch(0.704 0.04 256.788);
 
-  /* 业务语义色：浅色档取 600 保证白底文字对比度 */
+  /* 原浅色业务语义色；纸感主题使用独立的高对比度色值 */
   --correct: #16a34a;
   --wrong: #dc2626;
   --target: #2563eb;
@@ -66,6 +67,42 @@
   color-scheme: dark;
 }
 
+.soft-paper {
+  --background: #f3f5ed;
+  --foreground: #293b35;
+  --card: #fafbf6;
+  --card-foreground: #293b35;
+  --popover: #fafbf6;
+  --popover-foreground: #293b35;
+  --primary: #356859;
+  --primary-foreground: #fafbf6;
+  --secondary: #e8eddf;
+  --secondary-foreground: #293b35;
+  --muted: #e8eddf;
+  --muted-foreground: #59685d;
+  --accent: #e6efe3;
+  --accent-foreground: #293b35;
+  --destructive: #a4443d;
+  --border: #d5ddcf;
+  --input: #819080;
+  --ring: #315f87;
+  --correct: #356b49;
+  --wrong: #a4443d;
+  --target: #315f87;
+  --review: #695384;
+  --warn: #805d20;
+  --correct-soft: #e6efe3;
+  --wrong-soft: #f7e9e4;
+  --target-soft: #e7eef3;
+  --review-soft: #eee9f3;
+  --warn-soft: #f4eddc;
+  --finger-guide: #315f87;
+  --key-target-foreground: #293b35;
+  --hand-outline: #819080;
+
+  color-scheme: light;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -94,6 +131,27 @@
   --color-target: var(--target);
   --color-review: var(--review);
   --color-warn: var(--warn);
+  --color-correct-soft: var(--correct-soft);
+  --color-wrong-soft: var(--wrong-soft);
+  --color-target-soft: var(--target-soft);
+  --color-review-soft: var(--review-soft);
+  --color-warn-soft: var(--warn-soft);
+}
+
+/* 纸感主题保留局部状态提示，避免逐键抖动、弹跳。 */
+.soft-paper :is(.animate-shake, .animate-celebrate, .animate-finger-pop) {
+  animation: none;
+}
+
+.soft-paper :focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.animate-shake, .animate-celebrate, .animate-finger-pop) {
+    animation: none;
+  }
 }
 
 @theme {

@@ -122,7 +122,7 @@ export default function StatsPage() {
       <Card className="p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-muted-foreground">打卡日历（近 4 周）</h2>
-          <span className="inline-flex items-center gap-1 rounded-md bg-warn/10 px-2.5 py-1 text-xs font-bold text-warn">
+          <span className="inline-flex items-center gap-1 rounded-md bg-warn/10 soft:bg-warn-soft px-2.5 py-1 text-xs font-bold text-warn">
             <Flame className="size-3.5 fill-current" />
             连续 {meta.streakDays} 天
           </span>
@@ -142,7 +142,7 @@ export default function StatsPage() {
                 c.future
                   ? 'opacity-0'
                   : c.done
-                    ? 'bg-correct/15 font-bold text-correct'
+                    ? 'bg-correct/15 soft:bg-correct-soft font-bold text-correct'
                     : 'bg-muted text-muted-foreground/60',
                 c.key === today ? 'ring-2 ring-target ring-offset-1 ring-offset-card' : '',
               ].join(' ')}
@@ -179,15 +179,15 @@ export default function StatsPage() {
           })}
         </div>
         <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-lg bg-wrong/5 px-2 py-3">
+          <div className="rounded-lg bg-wrong/5 soft:bg-wrong-soft px-2 py-3">
             <div className="text-xs font-medium text-muted-foreground">今日待复习</div>
             <div className="mt-0.5 text-xl font-bold text-wrong">{mastery.status.due}</div>
           </div>
-          <div className="rounded-lg bg-target/5 px-2 py-3">
+          <div className="rounded-lg bg-target/5 soft:bg-target-soft px-2 py-3">
             <div className="text-xs font-medium text-muted-foreground">学习中</div>
             <div className="mt-0.5 text-xl font-bold text-target">{mastery.status.learning}</div>
           </div>
-          <div className="rounded-lg bg-correct/5 px-2 py-3">
+          <div className="rounded-lg bg-correct/5 soft:bg-correct-soft px-2 py-3">
             <div className="text-xs font-medium text-muted-foreground">巩固中</div>
             <div className="mt-0.5 text-xl font-bold text-correct">{mastery.status.strong}</div>
           </div>

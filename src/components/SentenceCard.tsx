@@ -21,7 +21,7 @@ export default function SentenceCard({ word, sentence, celebrating, badge, onSpe
   return (
     <Card className="relative w-full select-none px-6 py-4 text-center">
       {badge && (
-        <span className="absolute left-4 top-4 rounded-md bg-review/10 px-2.5 py-1 text-xs font-semibold text-review">
+        <span className="absolute left-4 top-4 rounded-md bg-review/10 soft:bg-review-soft px-2.5 py-1 text-xs font-semibold text-review">
           {badge}
         </span>
       )}
