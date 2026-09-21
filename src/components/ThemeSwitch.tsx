@@ -39,18 +39,18 @@ export default function ThemeSwitch() {
         aria-label="切换主题"
         aria-expanded={open}
         title="切换主题"
-        className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-accent-foreground"
+        className="relative inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg px-2 text-base transition hover:bg-accent"
       >
-        {theme === 'soft-paper' ? <Leaf className="size-[1.15rem]" /> : <>
+        <span className="relative inline-flex size-5 items-center justify-center">{theme === 'soft-paper' ? <Leaf className="size-[1.15rem]" /> : <>
           <Sun className="size-[1.15rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
           <Moon className="absolute size-[1.15rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-        </>}
+        </>}</span>主题
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-11 z-50 min-w-36 overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-md"
+          className="absolute left-1/2 -translate-x-1/2 top-11 z-50 min-w-36 overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-md"
         >
           {OPTIONS.map(({ value, label, icon: Icon }) => (
             <button
@@ -61,7 +61,7 @@ export default function ThemeSwitch() {
                 setTheme(value);
                 setOpen(false);
               }}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition hover:bg-accent hover:text-accent-foreground"
+              className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 py-2 text-base transition hover:bg-accent hover:text-accent-foreground"
             >
               <Icon className="size-4 text-muted-foreground" />
               {label}

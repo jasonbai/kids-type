@@ -25,14 +25,14 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.929 0.013 255.508);
   --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --ring: #2563eb;
 
   /* 原浅色业务语义色；纸感主题使用独立的高对比度色值 */
-  --correct: #16a34a;
+  --correct: #15803d;
   --wrong: #dc2626;
   --target: #2563eb;
   --review: #7c3aed;
-  --warn: #d97706;
+  --warn: #b45309;
 
   color-scheme: light;
 }
@@ -216,4 +216,15 @@
   0% { transform: scale(0.72); opacity: 0; }
   60% { transform: scale(1.04); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
+}
+
+/* Shared child-friendly controls, without changing saved theme choices. */
+:focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; }
+.settings-dialog input[type="range"], .settings-dialog select { min-height: 44px; }
+.settings-dialog label:has(input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
+.settings-dialog button { min-width: 44px; min-height: 44px; }
+.settings-dialog label, .settings-dialog button { font-size: 1rem; }
+.settings-dialog summary { list-style: revert; display: list-item; padding-block: 10px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }

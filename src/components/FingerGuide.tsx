@@ -5,7 +5,7 @@ interface Props {
   /** 包含键盘与手部留白的相对定位容器 */
   containerRef: RefObject<HTMLDivElement | null>;
   /** 字母 → 按键 DOM 引用表（由 VirtualKeyboard 填充） */
-  keyRefs: RefObject<Map<string, HTMLButtonElement>>;
+  keyRefs: RefObject<Map<string, HTMLDivElement>>;
   targetChar: string | null;
   /** 刚按错的字母：其对应手指短暂闪红（与 VirtualKeyboard 的 wrongChar 同源） */
   wrongChar?: string | null;
@@ -131,7 +131,7 @@ function extendFinger(rest: FingerGeo, keyCx: number, kbBottom: number, s: numbe
 
 function computeGeo(
   container: HTMLDivElement,
-  keyRefs: RefObject<Map<string, HTMLButtonElement>>,
+  keyRefs: RefObject<Map<string, HTMLDivElement>>,
   targetChar: string | null,
   wrongChar: string | null,
 ): Geo | null {

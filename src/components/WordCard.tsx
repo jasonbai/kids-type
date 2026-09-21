@@ -17,14 +17,14 @@ export default function WordCard({ word, celebrating, badge, onSpeak }: Props) {
   return (
     <Card className="relative w-full select-none px-6 py-5 text-center">
       {badge && (
-        <span className="absolute left-4 top-4 rounded-md bg-review/10 soft:bg-review-soft px-2.5 py-1 text-xs font-semibold text-review">
+        <span className="absolute left-4 top-4 rounded-md bg-review/10 soft:bg-review-soft px-2.5 py-1 text-sm font-semibold text-review">
           {badge}
         </span>
       )}
       <div className="flex items-center justify-center gap-2">
         <div
           className={[
-            'text-5xl font-extrabold tracking-[0.15em] transition-colors',
+            'min-w-0 break-all text-3xl sm:text-5xl font-extrabold tracking-wide transition-colors',
             celebrating ? 'animate-celebrate text-correct' : 'text-foreground',
           ].join(' ')}
         >

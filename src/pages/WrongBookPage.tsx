@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { BookX, Sparkles } from 'lucide-react';
 import { wordByIdOrNull } from '../data/vocab';
@@ -33,8 +34,8 @@ export default function WrongBookPage() {
   if (practiceWords) {
     return (
       <SessionRunner
-        title="错词专项练习"
-        badge="错词"
+        title="巩固练习"
+        badge="错题本"
         items={items}
         mode={mode}
         onResult={(r) => dispatch({ type: 'RESULT', result: r })}
@@ -62,8 +63,9 @@ export default function WrongBookPage() {
           <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted">
             <Sparkles className="size-6 text-muted-foreground" />
           </span>
-          <p className="mt-4 font-semibold">错题本是空的</p>
-          <p className="mt-1 text-sm text-muted-foreground">打错的词会自动出现在这里</p>
+          <p className="mt-4 font-semibold">暂时没有需要加强的单词</p>
+          <p className="mt-1 text-sm text-muted-foreground">需要巩固的单词会出现在这里，慢慢练就好</p>
+          <Link to="/" className="mt-4 inline-flex min-h-12 items-center rounded-lg bg-primary px-5 text-primary-foreground">回首页，开始今天的练习</Link>
         </Card>
       ) : (
         <ul className="space-y-3">
@@ -90,7 +92,7 @@ export default function WrongBookPage() {
                       </span>
                     ))}
                     <Badge variant="secondary">错 {e.wrongCount} 次</Badge>
-                    <span className="rounded-md bg-review/10 soft:bg-review-soft px-2 py-0.5 text-xs font-medium text-review">
+                    <span className="rounded-md bg-review/10 soft:bg-review-soft px-2 py-0.5 text-sm font-medium text-review">
                       连对 {e.clearStreak}/2
                     </span>
                   </div>

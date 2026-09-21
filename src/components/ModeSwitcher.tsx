@@ -16,7 +16,7 @@ const OPTIONS: Array<{ value: PracticeMode; label: string; title: string }> = [
 export default function ModeSwitcher({ mode, onChange }: Props) {
   return (
     <div
-      className="inline-flex shrink-0 rounded-lg bg-muted p-0.5 select-none"
+      className="inline-flex flex-wrap justify-center rounded-lg bg-muted p-0.5 select-none"
       role="group"
       aria-label="练习模式"
     >
@@ -28,7 +28,7 @@ export default function ModeSwitcher({ mode, onChange }: Props) {
           aria-pressed={mode === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+            'min-h-11 min-w-11 rounded-md px-3 py-2 text-base font-medium transition-colors',
             mode === o.value
               ? 'bg-card text-foreground shadow-xs'
               : 'text-muted-foreground hover:text-foreground',

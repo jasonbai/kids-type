@@ -8,13 +8,13 @@ interface Props {
   /** 刚按错的字符（闪红提示），null 则无 */
   wrongChar: string | null;
   /** 字符 → 按键 DOM 的引用表，供 FingerGuide 计算坐标 */
-  keyRefs: MutableRefObject<Map<string, HTMLButtonElement>>;
+  keyRefs: MutableRefObject<Map<string, HTMLDivElement>>;
 }
 
 export default function VirtualKeyboard({ targetChar, wrongChar, keyRefs }: Props) {
-  const localRefs = useRef(new Map<string, HTMLButtonElement>());
+  const localRefs = useRef(new Map<string, HTMLDivElement>());
 
-  const setRef = (ch: string, el: HTMLButtonElement | null) => {
+  const setRef = (ch: string, el: HTMLDivElement | null) => {
     if (el) {
       localRefs.current.set(ch, el);
       keyRefs.current.set(ch, el);
@@ -31,24 +31,22 @@ export default function VirtualKeyboard({ targetChar, wrongChar, keyRefs }: Prop
     const finger = fingerOf(ch);
     const isHome = ch === 'f' || ch === 'j';
     return (
-      <button
+      <div
         key={ch}
         ref={(el) => setRef(ch, el)}
-        tabIndex={-1}
-        onClick={(e) => e.preventDefault()}
         aria-label={`键 ${label}`}
         className={cn(
-          'relative flex h-11 flex-col items-center justify-center rounded-xl border-2 bg-card font-mono font-semibold text-foreground transition-all duration-150 md:h-12',
-          isWide ? 'w-40 text-xs md:w-52' : 'w-11 text-lg md:w-12 md:text-xl',
+          'relative flex min-w-0 h-10 flex-col items-center justify-center rounded-xl border-2 bg-card font-mono font-semibold text-foreground transition-all duration-150 md:h-12',
+          isWide ? 'flex-1 text-sm' : ch === PERIOD_KEY ? 'w-10 text-base' : 'flex-1 text-base md:text-xl',
           isWrong
-            ? 'scale-110 border-wrong bg-wrong/10 soft:bg-wrong-soft text-wrong shadow-md'
+            ? 'border-wrong bg-wrong/10 soft:bg-wrong-soft text-wrong shadow-md'
             : isTarget
-              ? 'scale-110 border-current shadow-md soft:bg-target-soft soft:after:absolute soft:after:bottom-1 soft:after:h-0.5 soft:after:w-4 soft:after:rounded soft:after:bg-target'
-              : 'border-input hover:border-ring/50',
+              ? 'border-current shadow-md soft:bg-target-soft soft:after:absolute soft:after:bottom-1 soft:after:h-0.5 soft:after:w-4 soft:after:rounded soft:after:bg-target'
+              : 'border-input',
         )}
         style={
           isTarget && !isWrong ? {
-            color: `var(--key-target-foreground, ${finger?.color ?? 'var(--target)'})`,
+            color: 'var(--foreground)',
             borderColor: `var(--finger-guide, ${finger?.color ?? 'var(--target)'})`,
           } : undefined
         }
@@ -63,19 +61,19 @@ export default function VirtualKeyboard({ targetChar, wrongChar, keyRefs }: Prop
             style={{ backgroundColor: `var(--finger-guide, ${finger.color})` }}
           />
         )}
-      </button>
+      </div>
     );
   };
 
   return (
-    <div className="flex flex-col items-center gap-1.5 select-none">
+    <div role="img" aria-label="键位提示图，请使用实体键盘输入" className="mx-auto flex w-full max-w-xl flex-col items-center gap-1.5 select-none">
       {KEYBOARD_ROWS.map((row, rowIdx) => (
-        <div key={rowIdx} className="flex gap-1.5" style={{ marginLeft: `${rowIdx * 1.75}rem` }}>
+        <div key={rowIdx} className="flex gap-1 w-full" style={{ paddingLeft: `${rowIdx * 3}%`, paddingRight: `${rowIdx * 2}%` }}>
           {row.map((ch) => renderKey(ch, ch.toUpperCase()))}
         </div>
       ))}
       {/* 第四排：空格 + 句号（例句练习需要；纯单词模式不会高亮，仅作真实键盘参照） */}
-      <div className="flex items-center gap-1.5" style={{ marginLeft: '2.5rem' }}>
+      <div className="flex w-3/5 items-center justify-center gap-1">
         {renderKey(SPACE_KEY, 'SPACE', true)}
         {renderKey(PERIOD_KEY, '.')}
       </div>

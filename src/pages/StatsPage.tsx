@@ -60,31 +60,31 @@ export default function StatsPage() {
     <main className="mx-auto w-full max-w-4xl space-y-5 px-4 py-8">
       <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight">
         <BarChart3 className="size-5 text-target" />
-        学习统计
+        我的进步
       </h1>
 
       {/* 总览 */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Card className="px-3 py-4 text-center">
-          <div className="text-xs font-medium text-muted-foreground">累计练习</div>
+          <div className="text-sm font-medium text-muted-foreground">累计练习</div>
           <div className="mt-1 text-2xl font-bold tracking-tight">
-            {totals.wordsTyped} <span className="text-xs font-medium text-muted-foreground">词</span>
+            {totals.wordsTyped} <span className="text-sm font-medium text-muted-foreground">词</span>
           </div>
         </Card>
         <Card className="px-3 py-4 text-center">
-          <div className="text-xs font-medium text-muted-foreground">总用时</div>
+          <div className="text-sm font-medium text-muted-foreground">总用时</div>
           <div className="mt-1 text-lg font-bold tracking-tight">{formatDuration(totals.seconds)}</div>
         </Card>
         <Card className="px-3 py-4 text-center">
-          <div className="text-xs font-medium text-muted-foreground">平均准确率</div>
+          <div className="text-sm font-medium text-muted-foreground">平均准确率</div>
           <div
             className={`mt-1 text-2xl font-bold tracking-tight ${totals.accuracy >= 90 ? 'text-correct' : 'text-warn'}`}
           >
-            {totals.accuracy}%
+            {totals.wordsTyped > 0 ? `${totals.accuracy}%` : '—'}
           </div>
         </Card>
         <Card className="px-3 py-4 text-center">
-          <div className="text-xs font-medium text-muted-foreground">星星</div>
+          <div className="text-sm font-medium text-muted-foreground">星星</div>
           <div className="mt-1 flex items-center justify-center gap-1 text-2xl font-bold tracking-tight text-warn">
             <Star className="size-4 fill-current" />
             {meta.totalStars}
@@ -92,44 +92,20 @@ export default function StatsPage() {
         </Card>
       </section>
 
-      {/* 近 7 天柱状图 */}
-      <Card className="p-6">
-        <h2 className="text-sm font-semibold text-muted-foreground">近 7 天练习词数</h2>
-        <div className="mt-4 flex h-40 items-end gap-2 sm:gap-4">
-          {week.days.map((d) => {
-            const isToday = d.key === today;
-            return (
-              <div key={d.key} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
-                <span className="text-xs font-bold text-muted-foreground">{d.words || ''}</span>
-                <div
-                  title={`${d.key}：${d.words} 词`}
-                  className={[
-                    'w-full max-w-10 rounded-t-lg transition-all',
-                    d.words === 0 ? 'bg-muted' : isToday ? 'bg-target' : 'bg-target/55',
-                  ].join(' ')}
-                  style={{ height: `${Math.max(4, (d.words / week.max) * 100)}%` }}
-                />
-                <span className={`text-xs ${isToday ? 'font-bold text-target' : 'text-muted-foreground'}`}>
-                  {shortDateLabel(d.key)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
+      {totals.wordsTyped === 0 && <p className="text-sm text-muted-foreground">练习后显示准确率和练习记录。今天从一个单词开始吧。</p>}
 
       {/* 打卡日历 */}
       <Card className="p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-muted-foreground">打卡日历（近 4 周）</h2>
-          <span className="inline-flex items-center gap-1 rounded-md bg-warn/10 soft:bg-warn-soft px-2.5 py-1 text-xs font-bold text-warn">
+          <span className="inline-flex items-center gap-1 rounded-md bg-warn/10 soft:bg-warn-soft px-2.5 py-1 text-sm font-bold text-warn">
             <Flame className="size-3.5 fill-current" />
             连续 {meta.streakDays} 天
           </span>
         </div>
         <div className="mt-4 grid grid-cols-7 gap-2">
           {['一', '二', '三', '四', '五', '六', '日'].map((d) => (
-            <div key={d} className="text-center text-xs font-medium text-muted-foreground/60">
+            <div key={d} className="text-center text-sm font-medium text-muted-foreground">
               {d}
             </div>
           ))}
@@ -138,12 +114,12 @@ export default function StatsPage() {
               key={c.key}
               title={c.key}
               className={[
-                'flex aspect-square items-center justify-center rounded-lg text-xs',
+                'flex aspect-square items-center justify-center rounded-lg text-sm',
                 c.future
                   ? 'opacity-0'
                   : c.done
                     ? 'bg-correct/15 soft:bg-correct-soft font-bold text-correct'
-                    : 'bg-muted text-muted-foreground/60',
+                    : 'bg-muted text-muted-foreground',
                 c.key === today ? 'ring-2 ring-target ring-offset-1 ring-offset-card' : '',
               ].join(' ')}
             >
@@ -153,9 +129,35 @@ export default function StatsPage() {
         </div>
       </Card>
 
-      {/* 词库掌握度 */}
+      {/* 近 7 天柱状图 */}
       <Card className="p-6">
-        <h2 className="text-sm font-semibold text-muted-foreground">词库掌握度</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground">近 7 天练习词数</h2>
+        <div className="mt-4 flex h-40 items-end gap-2 sm:gap-4">
+          {week.days.map((d) => {
+            const isToday = d.key === today;
+            return (
+              <div key={d.key} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
+                <span className="text-sm font-bold text-muted-foreground">{d.words || ''}</span>
+                <div
+                  title={`${d.key}：${d.words} 词`}
+                  className={[
+                    'w-full max-w-10 rounded-t-lg transition-all',
+                    d.words === 0 ? 'bg-muted' : isToday ? 'bg-target' : 'bg-target/55',
+                  ].join(' ')}
+                  style={{ height: `${Math.max(4, (d.words / week.max) * 100)}%` }}
+                />
+                <span className={`text-sm ${isToday ? 'font-bold text-target' : 'text-muted-foreground'}`}>
+                  {shortDateLabel(d.key)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* 词库练习进度 */}
+      <Card className="p-6">
+        <h2 className="text-sm font-semibold text-muted-foreground">词库练习进度</h2>
         <div className="mt-4 space-y-4">
           {(['KET', 'PET'] as const).map((lv) => {
             const { learned, total } = mastery[lv];
@@ -180,15 +182,15 @@ export default function StatsPage() {
         </div>
         <div className="mt-5 grid grid-cols-3 gap-2 text-center">
           <div className="rounded-lg bg-wrong/5 soft:bg-wrong-soft px-2 py-3">
-            <div className="text-xs font-medium text-muted-foreground">今日待复习</div>
+            <div className="text-sm font-medium text-muted-foreground">今日待复习</div>
             <div className="mt-0.5 text-xl font-bold text-wrong">{mastery.status.due}</div>
           </div>
           <div className="rounded-lg bg-target/5 soft:bg-target-soft px-2 py-3">
-            <div className="text-xs font-medium text-muted-foreground">学习中</div>
+            <div className="text-sm font-medium text-muted-foreground">学习中</div>
             <div className="mt-0.5 text-xl font-bold text-target">{mastery.status.learning}</div>
           </div>
           <div className="rounded-lg bg-correct/5 soft:bg-correct-soft px-2 py-3">
-            <div className="text-xs font-medium text-muted-foreground">巩固中</div>
+            <div className="text-sm font-medium text-muted-foreground">巩固中</div>
             <div className="mt-0.5 text-xl font-bold text-correct">{mastery.status.strong}</div>
           </div>
         </div>

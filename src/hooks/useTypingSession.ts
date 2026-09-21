@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import type { Level } from '../types';
 import type { SessionItem } from '../lib/session-items';
 import { judgeKey } from '../lib/judge';
@@ -23,12 +23,14 @@ export interface WordResult {
 export interface SessionSummary {
   totalWords: number;
   correctWords: number;
+  completedWords: number;
 }
 
 export type SessionPhase = 'ready' | 'typing' | 'celebrating' | 'done';
 
 interface Options {
   items: SessionItem[];
+  inputRef: RefObject<HTMLElement>;
   /** 条目完成后庆祝 + 朗读的停顿 */
   wordIntervalMs?: number;
   /** 打错的条目自动排到队尾，当日额外重复一次 */
@@ -42,13 +44,14 @@ interface Options {
 /**
  * 打字会话核心：window keydown → judgeKey 判定（严格模式）→ 推进。
  * 按键边界处理：
- * - 拦截 Tab/方向键（防滚动与焦点跳动）、Backspace（严格模式无退格）
+ * - 仅练习区聚焦时接收输入；Tab/方向键保留浏览器行为，Backspace 不退格
  * - 空格放行给判定（例句练习需要），仅阻止页面滚动
  * - 忽略输入法合成态（isComposing / keyCode 229）与一切修饰键组合
  * - CapsLock 状态检测（页面展示提示横幅）
  */
 export function useTypingSession({
   items,
+  inputRef,
   wordIntervalMs = 800,
   repeatWrong = true,
   speakOptions,
@@ -79,6 +82,7 @@ export function useTypingSession({
   /** TTS 是否已解锁（用状态而非 ref：按钮解锁后要触发新条目朗读 effect） */
   const [speechUnlocked, setSpeechUnlocked] = useState(false);
   const correctWordsRef = useRef(0);
+  const completedWordsRef = useRef(0);
 
   const current = queue[index];
 
@@ -104,6 +108,8 @@ export function useTypingSession({
     wordStartedAtRef.current = 0;
     wrongLettersRef.current = [];
     correctWordsRef.current = 0;
+    completedWordsRef.current = 0;
+    setSpeechUnlocked(false);
   }, [clearTimers, items]);
 
   // 词库/模式切换（items 引用变化）时重置会话
@@ -156,6 +162,7 @@ export function useTypingSession({
       kind: current.kind,
     };
     if (result.correct) correctWordsRef.current += 1;
+    completedWordsRef.current += 1;
     onWordResult?.(result);
 
     // 当日重复：打错的条目排到队尾（按条目键去重，只额外出现一次）
@@ -178,7 +185,7 @@ export function useTypingSession({
       setWrongChar(null);
       if (nextIndex >= nextQueue.length) {
         setPhase('done');
-        onSessionComplete?.({ totalWords: nextQueue.length, correctWords: correctWordsRef.current });
+        onSessionComplete?.({ totalWords: nextQueue.length, correctWords: correctWordsRef.current, completedWords: completedWordsRef.current });
       } else {
         setIndex(nextIndex);
         setInputLen(0);
@@ -191,6 +198,9 @@ export function useTypingSession({
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      // Only the explicitly focused practice surface accepts typing.
+      if (e.target !== inputRef.current || document.activeElement !== inputRef.current
+        || document.querySelector('dialog[open]')) return;
       if (typeof e.getModifierState === 'function') {
         const on = e.getModifierState('CapsLock');
         setCapsLockOn((prev) => (prev === on ? prev : on));
@@ -202,8 +212,8 @@ export function useTypingSession({
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       // 空格：阻止页面滚动后仍参与判定（例句练习需要）
       if (e.key === ' ') e.preventDefault();
-      // 拦截焦点移动键；严格模式无退格
-      if (e.key === 'Tab' || e.key.startsWith('Arrow') || e.key === 'Backspace') {
+      // 严格模式无退格；Tab 和方向键保留默认行为
+      if (e.key === 'Backspace') {
         e.preventDefault();
         return;
       }
@@ -250,7 +260,7 @@ export function useTypingSession({
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [phase, inputLen, current, finishWord, speechUnlocked, beginSession]);
+  }, [phase, inputLen, current, finishWord, speechUnlocked, beginSession, inputRef]);
 
   /** 跳过当前条目（不计成绩、不调度） */
   const skip = useCallback(() => {
@@ -265,6 +275,7 @@ export function useTypingSession({
       onSessionComplete?.({
         totalWords: queueRef.current.length,
         correctWords: correctWordsRef.current,
+        completedWords: completedWordsRef.current,
       });
     } else {
       setIndex(nextIndex);

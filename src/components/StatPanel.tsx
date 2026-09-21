@@ -11,7 +11,7 @@ export default function StatPanel({ elapsedSec, correctKeys, wrongKeys }: Props)
   const accuracy = calcAccuracy(correctKeys, wrongKeys);
   const wpm = calcWpm(correctKeys, elapsedSec);
   return (
-    <span className="flex items-center gap-x-2.5 whitespace-nowrap text-sm font-medium">
+    <span className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium">
       <span className="text-muted-foreground">
         用时 <b className="font-mono text-foreground">{formatElapsed(elapsedSec)}</b>
       </span>
@@ -22,10 +22,10 @@ export default function StatPanel({ elapsedSec, correctKeys, wrongKeys }: Props)
             accuracy >= 90 ? 'text-correct' : accuracy >= 70 ? 'text-warn' : 'text-wrong'
           }
         >
-          {accuracy}%
+          {correctKeys + wrongKeys > 0 ? `${accuracy}%` : '—'}
         </b>
       </span>
-      <span className="hidden text-muted-foreground sm:inline">
+      <span className="text-muted-foreground">
         速度 <b className="font-mono text-foreground">{wpm}</b> WPM
       </span>
     </span>

@@ -5,8 +5,6 @@ import { LEVEL_LABELS, allWords, poolFor } from '../data/vocab';
 import { buildDailyQueue } from '../lib/queue';
 import { todayKey } from '../lib/dateKey';
 import { activeWrongBook, useLearning } from '../store/learning';
-import { Badge } from '../components/ui/badge';
-import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 
 export default function HomePage() {
@@ -32,107 +30,47 @@ export default function HomePage() {
 
   const wrongCount = useMemo(() => activeWrongBook(state).length, [state]);
 
+  const hasReview = queue.dueWords.length > 0;
+  const hasNew = queue.newWords.length > 0;
+  const nextPath = hasReview ? '/review' : hasNew ? '/practice' : wrongCount > 0 ? '/wrong' : '/stats';
+  const nextLabel = hasReview ? '复习一下' : hasNew ? '开始练习' : wrongCount > 0 ? '打开错题本' : '看看我的进步';
+
   return (
     <main className="mx-auto w-full max-w-4xl space-y-5 px-4 py-8">
-      {/* 打卡横幅 */}
-      <section className="flex items-center justify-between rounded-xl bg-primary px-6 py-5 text-primary-foreground shadow-sm">
-        <div>
-          <div className="flex items-center gap-1.5 text-sm font-medium text-primary-foreground/70 soft:text-primary-foreground">
-            <Flame className="size-4 fill-current" />
-            连续打卡
-          </div>
-          <div className="mt-1 text-3xl font-extrabold tracking-tight">{meta.streakDays} 天</div>
-        </div>
-        <div className="text-right text-sm text-primary-foreground/70 soft:text-primary-foreground">
-          {todayLog ? (
-            <>
-              今日已练 <b className="text-lg text-primary-foreground">{todayLog.wordsTyped}</b> 词
-              <br />
-              用时 {Math.round(todayLog.totalSeconds / 60)} 分钟 · ⭐ {meta.totalStars}
-            </>
-          ) : (
-            <>
-              今天还没开始练习哦
-              <br />
-              累计 ⭐ {meta.totalStars}
-            </>
-          )}
-        </div>
+      <section className="rounded-xl border bg-card p-6 sm:p-8">
+        <p className="text-sm text-muted-foreground">今天练什么 · {LEVEL_LABELS[settings.currentLevel]}</p>
+        <h1 className="mt-2 text-3xl font-bold">{hasReview ? '和学过的单词见个面' : hasNew ? '一起练几个单词吧' : '今天的任务都看过啦'}</h1>
+        <p className="mt-3 text-base leading-7 text-muted-foreground">
+          {hasReview ? `有 ${queue.dueWords.length} 个单词等你复习。慢慢来，按对每一个键。`
+            : hasNew ? `这一组有 ${Math.min(dailyNew, queue.newWords.length)} 个新词。听一听，再动手试试。`
+            : wrongCount > 0 ? '还可以把需要巩固的单词再练一练。' : '可以休息一下，也可以看看自己的练习记录。'}
+        </p>
+        <Link to={nextPath} className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-lg font-semibold text-primary-foreground">{nextLabel}<ArrowRight className="size-5" /></Link>
       </section>
 
-      {/* 今日任务卡片 */}
-      <section className="grid gap-4 sm:grid-cols-2">
-        <Link to="/review" className="group">
-          <Card className="h-full gap-0 p-6 transition-colors hover:border-review/50 hover:shadow-md">
-            <span className="flex size-10 items-center justify-center rounded-lg bg-review/10 soft:bg-review-soft text-review">
-              <BookOpen className="size-5" />
-            </span>
-            <div className="mt-3 text-lg font-semibold">复习到期词</div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              {queue.dueWords.length > 0
-                ? `${queue.dueWords.length} 个单词到了复习时间`
-                : '暂时没有到期的词'}
-            </div>
-            <span className="mt-4 inline-flex">
-              <Button variant={queue.dueWords.length > 0 ? 'default' : 'secondary'}>
-                {queue.dueWords.length > 0 ? '开始复习' : '去看看'}
-                <ArrowRight />
-              </Button>
-            </span>
-          </Card>
-        </Link>
+      <div className="flex flex-wrap gap-x-6 gap-y-2 px-1 text-sm text-muted-foreground">
+        <span className="inline-flex items-center gap-2"><Flame className="size-4" />连续打卡 {meta.streakDays} 天</span>
+        <span>累计星星 {meta.totalStars}</span>
+        <span>今天已练 {todayLog?.wordsTyped ?? 0} 词</span>
+      </div>
 
-        <Link to="/practice" className="group">
-          <Card className="h-full gap-0 p-6 transition-colors hover:border-primary/40 hover:shadow-md">
-            <span className="flex size-10 items-center justify-center rounded-lg bg-target/10 soft:bg-target-soft text-target">
-              <Sprout className="size-5" />
-            </span>
-            <div className="mt-3 flex items-center text-lg font-semibold">
-              学新词
-              <Badge variant="secondary" className="ms-2">
-                {LEVEL_LABELS[settings.currentLevel]}
-              </Badge>
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              {queue.newWords.length === 0
-                ? '这个词库的新词已经全部学完啦'
-                : learnedToday === 0
-                  ? `今日 ${Math.min(dailyNew, queue.newWords.length)} 个新词等你来`
-                  : learnedToday < dailyNew
-                    ? `今日已学 ${learnedToday}/${dailyNew} 个，继续加油`
-                    : `今日已学 ${learnedToday} 个新词，可继续加练 ✨`}
-            </div>
-            <span className="mt-4 inline-flex">
-              <Button variant={queue.newWords.length === 0 ? 'secondary' : 'default'}>
-                {queue.newWords.length === 0 ? '去看看' : learnedToday >= dailyNew ? '继续加练' : '开始练习'}
-                <ArrowRight />
-              </Button>
-            </span>
-          </Card>
-        </Link>
-      </section>
-
-      {/* 错题本 */}
-      <Link to="/wrong">
-        <Card className="flex items-center justify-between px-6 py-5 transition-colors hover:shadow-md">
-          <div className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-lg bg-wrong/10 soft:bg-wrong-soft text-wrong">
-              <BookX className="size-5" />
-            </span>
-            <div>
-              <div className="font-semibold">错题本</div>
-              <div className="mt-0.5 text-sm text-muted-foreground">
-                {wrongCount > 0 ? `${wrongCount} 个词需要加强` : '没有错词，继续保持！'}
-              </div>
-            </div>
-          </div>
-          <span className="text-2xl font-bold text-muted-foreground/50">{wrongCount}</span>
+      <section aria-label="其他练习" className="grid gap-4 sm:grid-cols-2">
+        <Card className="gap-3 p-5">
+          <h2 className="flex items-center gap-2 text-lg font-semibold"><BookOpen className="size-5 text-review" />复习一下</h2>
+          <p className="text-base text-muted-foreground">{hasReview ? `${queue.dueWords.length} 个熟悉的单词等你来` : '今天暂时没有要复习的单词'}</p>
+          {hasReview && <Link className="inline-flex min-h-11 items-center font-medium underline underline-offset-4" to="/review">去复习</Link>}
         </Card>
+        <Card className="gap-3 p-5">
+          <h2 className="flex items-center gap-2 text-lg font-semibold"><Sprout className="size-5 text-target" />学新词</h2>
+          <p className="text-base text-muted-foreground">{!hasNew ? '这个词库的新词已经练过一遍啦' : learnedToday > 0 ? `今天已学 ${learnedToday} 个新词` : '听一听单词，再跟着键位提示练习'}</p>
+          {hasNew && <Link className="inline-flex min-h-11 items-center font-medium underline underline-offset-4" to="/practice">{learnedToday >= dailyNew ? '想练的话，再来一组' : '去学新词'}</Link>}
+        </Card>
+      </section>
+      <Link to="/wrong" className="block rounded-xl border bg-card p-5">
+        <h2 className="flex items-center gap-2 text-lg font-semibold"><BookX className="size-5 text-review" />错题本</h2>
+        <p className="mt-2 text-base text-muted-foreground">{wrongCount > 0 ? `${wrongCount} 个单词需要巩固，按错也没关系` : '暂时没有需要加强的单词'}</p>
       </Link>
-
-      <p className="pb-6 text-center text-xs text-muted-foreground">
-        打错的词会自动进错题本，并按艾宾浩斯曲线在后续几天反复出现
-      </p>
+      <p className="text-center text-sm text-muted-foreground">练过的单词，以后还会陪你复习</p>
     </main>
   );
 }

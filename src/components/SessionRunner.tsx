@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Flame, PartyPopper, RotateCcw, Rocket, Star, TriangleAlert } from 'lucide-react';
 import type { PracticeMode } from '../types';
@@ -37,8 +37,10 @@ interface Props {
 export default function SessionRunner({ title, items, mode, badge, onResult, onRebuild }: Props) {
   const { state, dispatch } = useLearning();
   const { rate, voiceURI, wordIntervalMs, showHandGuide, showKeyboard } = state.settings;
-  /** 首次"开始练习"引导是否已关闭（点击或按键均可开始） */
+  /** 用户点击开始后，将焦点移到练习区域。 */
   const [startedOnce, setStartedOnce] = useState(false);
+  const inputRef = useRef<HTMLDivElement>(null);
+  const [focused, setFocused] = useState(false);
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   /** 连对激励：连对每满 5 条 +1 ⭐（立即入账，中途退出不丢） */
   const [combo, setCombo] = useState(0);
@@ -68,6 +70,7 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
     comboRef.current = 0;
     setCombo(0);
     setSummary(null);
+    setStartedOnce(false);
     fn?.();
   };
 
@@ -91,6 +94,7 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
     beginSession,
   } = useTypingSession({
     items,
+    inputRef,
     wordIntervalMs,
     speakOptions,
     onWordResult: handleResult,
@@ -98,9 +102,18 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
   });
 
   const boardRef = useRef<HTMLDivElement>(null);
-  const keyRefs = useRef(new Map<string, HTMLButtonElement>());
+  const keyRefs = useRef(new Map<string, HTMLDivElement>());
 
-  const showStartOverlay = phase === 'ready' && !startedOnce;
+  useEffect(() => {
+    setStartedOnce(false);
+    setSummary(null);
+    setCombo(0);
+    comboRef.current = 0;
+    starsRef.current = 0;
+  }, [items]);
+  useEffect(() => { if (startedOnce) inputRef.current?.focus(); }, [startedOnce]);
+  const showStartScreen = !startedOnce && phase !== 'done';
+  const processed = phase === 'done' ? total : index + (phase === 'celebrating' ? 1 : 0);
   // 高亮/提示用目标字符统一小写：键盘键帽是小写，例句句首可能大写（如 I）
   const rawNext = phase === 'ready' || phase === 'typing' ? (current?.text[inputLen] ?? null) : null;
   const nextChar = rawNext === null ? null : rawNext.toLowerCase();
@@ -120,9 +133,9 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
           <span className="mt-6 inline-flex">
             <Link
               to="/"
-              className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow-xs transition hover:bg-primary/90"
+              className="inline-flex min-h-12 items-center justify-center rounded-md bg-primary px-8 text-base font-medium text-primary-foreground shadow-xs transition hover:bg-primary/90"
             >
-              回到今日任务
+              回首页，看看今天练什么
             </Link>
           </span>
         </Card>
@@ -140,13 +153,22 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
         </p>
       )}
 
-      {phase === 'done' && summary ? (
+      {showStartScreen ? (
+        <Card className="my-8 items-center gap-5 px-5 py-10 text-center">
+          <h1 className="text-2xl font-bold">准备好了吗？</h1>
+          <p className="text-base leading-8">先听单词 → 看亮起的键 → 用提示的手指按下去。</p>
+          <ModeSwitcher mode={mode} onChange={(m) => dispatch({ type: 'SETTINGS', patch: { practiceMode: m } })} />
+          <Button size="lg" onClick={() => { beginSession(); setStartedOnce(true); }}><Rocket />开始{title}</Button>
+          <p className="text-sm text-muted-foreground">使用实体键盘，按错也没关系。</p>
+        </Card>
+      ) : phase === 'done' && summary ? (
         <div className="flex min-h-0 flex-1 flex-col justify-center">
           <Card className="px-6 py-10 text-center">
-          <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-correct/10 soft:bg-correct-soft">
+          {summary.completedWords > 0 && <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-correct/10 soft:bg-correct-soft">
             <PartyPopper className="size-6 text-correct" />
-          </span>
-          <h2 className="mt-3 text-2xl font-bold tracking-tight">{title}完成！</h2>
+          </span>}
+          <h2 className="mt-3 text-2xl font-bold tracking-tight">{summary.completedWords > 0 ? '这一组练完啦' : '这一组先放一放'}</h2>
+          <p className="mt-2 text-muted-foreground">{summary.completedWords > 0 ? `认真练完了 ${summary.completedWords} 项，休息一下吧。` : '这次还没有练完题目，准备好后再来。'}</p>
           {starsRef.current > 0 && (
             <p className="mt-2 flex items-center justify-center gap-1.5 text-lg font-bold text-warn">
               <Star className="size-5 fill-current" />
@@ -155,73 +177,71 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
           )}
           <div className="mx-auto mt-6 grid max-w-md grid-cols-3 gap-3">
             <div className="rounded-lg bg-muted/60 px-2 py-4">
-              <div className="text-xs font-medium text-muted-foreground">正确{unit}数</div>
+              <div className="text-sm font-medium text-muted-foreground">一次全对</div>
               <div className="mt-1 text-2xl font-bold text-correct">
                 {summary.correctWords}/{summary.totalWords}
               </div>
             </div>
             <div className="rounded-lg bg-muted/60 px-2 py-4">
-              <div className="text-xs font-medium text-muted-foreground">按键准确率</div>
-              <div className="mt-1 text-2xl font-bold">{calcAccuracy(correctKeys, wrongKeys)}%</div>
+              <div className="text-sm font-medium text-muted-foreground">按键准确率</div>
+              <div className="mt-1 text-2xl font-bold">{correctKeys + wrongKeys > 0 ? `${calcAccuracy(correctKeys, wrongKeys)}%` : '—'}</div>
             </div>
             <div className="rounded-lg bg-muted/60 px-2 py-4">
-              <div className="text-xs font-medium text-muted-foreground">用时</div>
+              <div className="text-sm font-medium text-muted-foreground">用时</div>
               <div className="mt-1 font-mono text-2xl font-bold">{formatElapsed(elapsedSec)}</div>
             </div>
           </div>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link to="/" className="inline-flex min-h-12 items-center justify-center rounded-md bg-primary px-6 py-3 text-primary-foreground">休息一下，回首页</Link>
             {onRebuild && (
-              <Button size="lg" onClick={() => resetSession(onRebuild)}>
-                下一批 →
+              <Button size="lg" variant="secondary" onClick={() => resetSession(onRebuild)}>
+                再练一组
               </Button>
             )}
             <Button size="lg" variant="secondary" onClick={() => resetSession(restart)}>
               <RotateCcw />
               重练本组
             </Button>
-            <Link
-              to="/"
-              className="rounded-md px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              回到今日任务
-            </Link>
+
           </div>
           </Card>
         </div>
       ) : (
         current && (
           <>
-            {/* 顶栏：标题进度 + 模式切换 + 实时统计 + 跳过 */}
+            {/* 顶栏：题目进度和跳过，详细统计默认收起。 */}
             <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-sm font-medium text-muted-foreground">
               <span className="flex items-center gap-2">
                 {title} · 第 {index + 1} / {total} {unit}
                 {combo >= 2 && (
-                  <span className="inline-flex animate-celebrate items-center gap-1 rounded-md bg-warn/10 soft:bg-warn-soft px-2 py-0.5 text-xs font-bold text-warn">
+                  <span className="inline-flex animate-celebrate items-center gap-1 rounded-md bg-warn/10 soft:bg-warn-soft px-2 py-0.5 text-sm font-bold text-warn">
                     <Flame className="size-3 fill-current" />
                     连对 {combo}
                   </span>
                 )}
               </span>
-              <ModeSwitcher
-                mode={mode}
-                onChange={(m) => dispatch({ type: 'SETTINGS', patch: { practiceMode: m } })}
-              />
-              <div className="h-1.5 min-w-16 flex-1 overflow-hidden rounded-full bg-muted">
+              <div role="progressbar" aria-label="已处理题目" aria-valuemin={0} aria-valuemax={total} aria-valuenow={processed} className="h-2 min-w-16 flex-1 overflow-hidden rounded-full bg-muted">
                 <div
                   className="h-full rounded-full bg-correct transition-all duration-300"
-                  style={{ width: `${((index + 1) / total) * 100}%` }}
+                  style={{ width: `${(processed / total) * 100}%` }}
                 />
               </div>
-              <StatPanel elapsedSec={elapsedSec} correctKeys={correctKeys} wrongKeys={wrongKeys} />
+
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-2.5 text-xs text-muted-foreground"
-                onClick={skip}
+                className="text-muted-foreground"
+                onClick={() => { skip(); inputRef.current?.focus(); }} disabled={phase === 'celebrating'}
               >
-                跳过 →
+                先跳过
               </Button>
             </div>
+
+            {total > items.length && <p role="status" className="text-sm text-review">再巩固一下：新增 {total - items.length} 项</p>}
+            <section aria-label="练习详情" className="space-y-2 rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
+              <h2 className="font-medium">练习详情</h2>
+              <StatPanel elapsedSec={elapsedSec} correctKeys={correctKeys} wrongKeys={wrongKeys} />
+            </section>
 
             {/* 中部：卡片 + 打字区 + 键盘作为一个分组整体居中 */}
             <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5">
@@ -242,7 +262,11 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
                 />
               )}
 
-              <section className="space-y-2.5">
+              <div ref={inputRef} tabIndex={0} role="group" aria-label="打字练习区" aria-describedby="typing-help"
+                onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+                onClick={() => inputRef.current?.focus()}
+                className="w-full cursor-text space-y-3 rounded-xl p-3">
+                <p className="text-center text-sm text-muted-foreground">{focused ? '可以开始打字啦' : '点击这里，或用 Tab 回到这里继续打字'}</p>
                 {isSentence ? (
                   <SentenceTypingArea
                     sentence={current.text}
@@ -255,7 +279,7 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
                 {hint && nextChar ? (
                   <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     <span className="h-3 w-3 rounded-full" style={{ backgroundColor: `var(--finger-guide, ${hint.color})` }} />
-                    用<b style={{ color: `var(--finger-guide, ${hint.color})` }}>{hint.label}</b>
+                    用<b className="text-foreground">{hint.label}</b>
                     按{' '}
                     <b className="font-mono uppercase text-foreground">
                       {nextChar === ' ' ? '空格' : nextChar}
@@ -265,13 +289,16 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
                 ) : (
                   <p className="text-center text-sm text-correct">✨ 太棒了！</p>
                 )}
-              </section>
+                <p id="typing-help" className="text-center text-sm text-muted-foreground">按错不用删除，按对的键就能继续</p>
+                {wrongIndex !== null && <p role="status" className="rounded-lg border-2 border-target p-2 text-center text-target">试试{showKeyboard ? '亮起的 ' : '实体键盘上的 '}{nextChar === ' ' ? '空格' : nextChar?.toUpperCase()} 键</p>}
+              </div>
 
-              {/* 键盘板整块可关：pb-32 是给双手预留的空间，隐藏键盘时一并去掉 */}
+              {showKeyboard && <p className="text-center text-sm text-muted-foreground">键位提示图 · 请按实体键盘上的按键</p>}
+              {/* 保留指法图空间 */}
               {showKeyboard && (
                 <section
                   ref={boardRef}
-                  className="relative w-full shrink-0 rounded-xl border bg-card px-4 pb-32 pt-3 shadow-sm"
+                  className={`relative w-full shrink-0 rounded-xl border bg-card px-2 pt-3 shadow-sm ${showHandGuide ? 'pb-32' : 'pb-3'}`}
                 >
                   <VirtualKeyboard targetChar={nextChar} wrongChar={wrongChar} keyRefs={keyRefs} />
                   {showHandGuide && (
@@ -289,24 +316,6 @@ export default function SessionRunner({ title, items, mode, badge, onResult, onR
         )
       )}
 
-      {/* 开始遮罩盖住整个练习区（卡片 + 键盘），而非仅键盘 */}
-      {showStartOverlay && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-background/85 backdrop-blur-sm">
-          <p className="text-lg font-semibold">准备好了吗？</p>
-          <Button
-            size="lg"
-            className="px-10 text-lg font-bold"
-            onClick={() => {
-              beginSession();
-              setStartedOnce(true);
-            }}
-          >
-            <Rocket />
-            开始{title}
-          </Button>
-          <p className="text-sm text-muted-foreground">点击开始，或直接按任意字母键</p>
-        </div>
-      )}
     </main>
   );
 }

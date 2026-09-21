@@ -3,7 +3,7 @@ import { APP_VERSION, REPO_URL } from '../lib/repo';
 
 export default function Footer() {
   return (
-    <footer className="mt-auto border-t py-4 text-center text-xs text-muted-foreground">
+    <footer className="mt-auto border-t py-4 text-center text-sm text-muted-foreground">
       <p className="flex flex-wrap items-center justify-center gap-1.5 px-4">
         <span>单词打字 v{APP_VERSION}</span>
         <span>·</span>

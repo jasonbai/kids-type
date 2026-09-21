@@ -11,6 +11,7 @@ import {
   Volume2,
   X,
 } from 'lucide-react';
+import { LEVEL_LABELS } from '../data/vocab';
 import GithubIcon from "./GithubIcon";
 import { APP_VERSION, REPO_URL } from '../lib/repo';
 import type { Settings } from '../types';
@@ -42,6 +43,7 @@ interface BackupFile {
 export default function SettingsDialog({ open, onClose }: Props) {
   const { state, dispatch } = useLearning();
   const s = state.settings;
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   // 音色列表异步加载（首次 getVoices 为空，voiceschanged 后刷新）
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -58,6 +60,17 @@ export default function SettingsDialog({ open, onClose }: Props) {
       window.speechSynthesis.addEventListener('voiceschanged', refresh);
       return () => window.speechSynthesis.removeEventListener('voiceschanged', refresh);
     }
+  }, [open]);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!open || !dialog) return;
+    const previous = document.activeElement as HTMLElement | null;
+    dialog.showModal();
+    return () => {
+      dialog.close();
+      if (previous?.isConnected) previous.focus();
+    };
   }, [open]);
 
   if (!open) return null;
@@ -118,7 +131,7 @@ export default function SettingsDialog({ open, onClose }: Props) {
   };
 
   const clearAll = () => {
-    if (!confirm('确定清空全部学习进度吗？此操作不可恢复（建议先导出备份）')) return;
+    if (!confirm('确定清空本机全部学习进度、自定义词表和设置吗？此操作不可恢复，请先导出备份。')) return;
     Object.values(KEYS).forEach(remove);
     location.reload();
   };
@@ -165,29 +178,25 @@ export default function SettingsDialog({ open, onClose }: Props) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-6"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-xl border bg-background p-6 shadow-lg sm:rounded-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-lg font-semibold">
+    <dialog ref={dialogRef} aria-labelledby="settings-title" onCancel={onClose}
+      onClick={(e) => { if (e.target === e.currentTarget) { const r = e.currentTarget.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) onClose(); } }}
+      className="settings-dialog fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-lg overflow-y-auto rounded-xl border bg-background p-5 text-foreground shadow-lg backdrop:bg-black/50">
+        <div className="mb-5 flex min-h-11 items-center justify-between">
+          <h2 id="settings-title" className="flex items-center gap-2 text-lg font-semibold">
             <SettingsIcon className="size-5 text-muted-foreground" />
             设置
           </h2>
           <button
             onClick={onClose}
             aria-label="关闭设置"
-            className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-accent-foreground"
+            className="flex size-11 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-accent-foreground"
           >
             <X className="size-4" />
           </button>
         </div>
 
         <div className="space-y-6">
+          <h3 className="text-lg font-semibold">声音与提示</h3>
           {/* 朗读 */}
           <section className="space-y-4">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
@@ -237,7 +246,7 @@ export default function SettingsDialog({ open, onClose }: Props) {
               <Music className="size-4" />
               键盘音效
             </h3>
-            <label className="flex items-center justify-between">
+            <label className="flex min-h-11 items-center justify-between">
               <span className="text-sm font-medium">开启音效</span>
               <input
                 type="checkbox"
@@ -265,6 +274,52 @@ export default function SettingsDialog({ open, onClose }: Props) {
             </label>
           </section>
 
+          <section className="space-y-4" aria-label="练习提示">
+            <label className="flex min-h-11 items-center justify-between">
+              <span className="text-sm font-medium">键盘指引（虚拟键盘）</span>
+              <input
+                type="checkbox"
+                checked={s.showKeyboard}
+                onChange={(e) => patch({ showKeyboard: e.target.checked })}
+                className="size-4 accent-target"
+              />
+            </label>
+            <div>
+              <label className="flex min-h-11 items-center justify-between">
+                <span
+                  className={[
+                    'text-sm font-medium',
+                    s.showKeyboard ? '' : 'text-muted-foreground',
+                  ].join(' ')}
+                >
+                  手势指引（虚拟双手）
+                </span>
+                <input
+                  type="checkbox"
+                  checked={s.showHandGuide}
+                  disabled={!s.showKeyboard}
+                  onChange={(e) => patch({ showHandGuide: e.target.checked })}
+                  className="size-4 accent-target disabled:opacity-40"
+                />
+              </label>
+              {!s.showKeyboard && (
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  虚拟双手按键盘键位定位，需先显示键盘
+                </p>
+              )}
+            </div>
+          </section>
+          <details className="border-t pt-3">
+            <summary className="flex min-h-11 cursor-pointer items-center text-lg font-semibold">家长设置 · 展开查看</summary>
+            <div className="mt-4 space-y-6">
+              <p className="text-sm text-muted-foreground">在这里调整学习内容、备份和管理本机数据。</p>
+              <label className="block space-y-2"><span>练习词库</span>
+                <select className="w-full rounded-md border bg-background px-3" value={s.currentLevel} onChange={e => patch({ currentLevel: e.target.value as Settings['currentLevel'] })}>
+                  <option value="KET">{LEVEL_LABELS.KET}</option><option value="PET">{LEVEL_LABELS.PET}</option>
+                  {state.customWords.length > 0 && <option value="CUSTOM">{LEVEL_LABELS.CUSTOM}</option>}
+                </select>
+              </label>
+              <p className="text-sm text-muted-foreground">复习参考间隔记忆原理（常称艾宾浩斯曲线），使用简化 SM-2 安排；按键失误也会影响复习记录，不代表孩子没有理解单词。</p>
           {/* 练习 */}
           <section className="space-y-4">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
@@ -318,7 +373,7 @@ export default function SettingsDialog({ open, onClose }: Props) {
                     type="button"
                     onClick={() => patch({ practiceMode: value })}
                     className={[
-                      'flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
+                      'flex-1 rounded-md px-2 py-1.5 text-sm font-medium transition-colors',
                       s.practiceMode === value
                         ? 'bg-card text-foreground shadow-xs'
                         : 'text-muted-foreground hover:text-foreground',
@@ -328,42 +383,9 @@ export default function SettingsDialog({ open, onClose }: Props) {
                   </button>
                 ))}
               </div>
-              <p className="mt-1.5 text-xs text-muted-foreground">
+              <p className="mt-1.5 text-sm text-muted-foreground">
                 混合模式：每个单词先打单词，紧接着打它的一条例句（每天轮换）
               </p>
-            </div>
-            <label className="flex items-center justify-between">
-              <span className="text-sm font-medium">键盘指引（虚拟键盘）</span>
-              <input
-                type="checkbox"
-                checked={s.showKeyboard}
-                onChange={(e) => patch({ showKeyboard: e.target.checked })}
-                className="size-4 accent-target"
-              />
-            </label>
-            <div>
-              <label className="flex items-center justify-between">
-                <span
-                  className={[
-                    'text-sm font-medium',
-                    s.showKeyboard ? '' : 'text-muted-foreground',
-                  ].join(' ')}
-                >
-                  手势指引（虚拟双手）
-                </span>
-                <input
-                  type="checkbox"
-                  checked={s.showHandGuide}
-                  disabled={!s.showKeyboard}
-                  onChange={(e) => patch({ showHandGuide: e.target.checked })}
-                  className="size-4 accent-target disabled:opacity-40"
-                />
-              </label>
-              {!s.showKeyboard && (
-                <p className="mt-1.5 text-xs text-muted-foreground">
-                  虚拟双手按键盘键位定位，需先显示键盘
-                </p>
-              )}
             </div>
           </section>
 
@@ -373,9 +395,9 @@ export default function SettingsDialog({ open, onClose }: Props) {
               <BookPlus className="size-4" />
               自定义词表
             </h3>
-            <p className="text-xs leading-relaxed text-muted-foreground">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               已导入 <b className="text-foreground">{state.customWords.length}</b> 个词
-              {state.customWords.length > 0 && '，可在顶部切换"自定义"词库练习'}。
+              {state.customWords.length > 0 && '，可在上方选择“自定义”词库练习'}。
             </p>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={downloadVocabTemplate}>
@@ -403,11 +425,11 @@ export default function SettingsDialog({ open, onClose }: Props) {
                 </Button>
               )}
             </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               下载模板，替换示例单词后保存为 CSV UTF-8，再上传。释义和音标可留空，也支持每行一个单词的 TXT 文件。
             </p>
             {vocabReport && (
-              <div role="status" aria-live="polite" className="space-y-2 rounded-md border p-3 text-xs leading-relaxed">
+              <div role="status" aria-live="polite" className="space-y-2 rounded-md border p-3 text-sm leading-relaxed">
                 <p>{vocabReport.message}</p>
                 {vocabReport.result && <>
                   <p>导入 {vocabReport.result.words.length} 个；文件内重复 {vocabReport.result.duplicateInFile} 个；无效行 {vocabReport.result.invalidCount} 条。</p>
@@ -419,7 +441,7 @@ export default function SettingsDialog({ open, onClose }: Props) {
                 </>}
               </div>
             )}
-            <p className="text-xs leading-relaxed text-muted-foreground">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               每个单词限 2–20 个英文字母，暂不支持词组，最多 {MAX_CUSTOM_WORDS} 个。再次导入会替换当前词表，学习进度保留。
             </p>
           </section>
@@ -430,7 +452,7 @@ export default function SettingsDialog({ open, onClose }: Props) {
               <Database className="size-4" />
               数据备份
             </h3>
-            <p className="text-xs leading-relaxed text-muted-foreground">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               学习进度保存在本机浏览器中，清除浏览器数据会丢失。定期导出备份，换设备时导入即可恢复。
             </p>
             <div className="flex flex-wrap gap-2">
@@ -466,7 +488,7 @@ export default function SettingsDialog({ open, onClose }: Props) {
               <GithubIcon className="size-4" />
               关于
             </h3>
-            <p className="text-xs leading-relaxed text-muted-foreground">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               单词打字 v{APP_VERSION}
               是一款开源的英语单词打字练习应用，基于 MIT 协议发布。
             </p>
@@ -479,7 +501,7 @@ export default function SettingsDialog({ open, onClose }: Props) {
               <GithubIcon className="size-4" />
               github.com/jasonbai/kids-type
             </a>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               作者：
               <a
                 href="https://www.jasonbai.com"
@@ -491,8 +513,9 @@ export default function SettingsDialog({ open, onClose }: Props) {
               </a>
             </p>
           </section>
+            </div>
+          </details>
         </div>
-      </div>
-    </div>
+    </dialog>
   );
 }

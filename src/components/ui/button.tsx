@@ -16,10 +16,10 @@ const VARIANTS: Record<Variant, string> = {
 };
 
 const SIZES: Record<Size, string> = {
-  default: 'h-9 px-4 py-2',
-  sm: 'h-8 gap-1.5 px-3',
-  lg: 'h-11 gap-2 px-6',
-  icon: 'size-9',
+  default: 'min-h-12 min-w-11 px-4 py-2',
+  sm: 'min-h-11 min-w-11 gap-1.5 px-3',
+  lg: 'min-h-12 gap-2 px-6 py-3',
+  icon: 'size-11',
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -31,7 +31,7 @@ export function Button({ className, variant = 'default', size = 'default', ...pr
   return (
     <button
       className={cn(
-        'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all outline-none select-none',
+        'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-medium transition-all outline-none select-none',
         'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
         'disabled:pointer-events-none disabled:opacity-50',
         'active:scale-[0.98] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4',
